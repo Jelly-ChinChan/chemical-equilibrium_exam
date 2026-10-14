@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>化學平衡正式測驗（成績自動登記版）</title>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --primary-light: #eff6ff;
+      --secondary: #64748b;
+      --success: #16a34a;
+      --danger: #dc2626;
+      --gray-bg: #f8fafc;
+      --card-bg: #ffffff;
+      --border: #e2e8f0;
+      --text: #1e293b;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background-color: var(--gray-bg);
+      color: var(--text);
+      line-height: 1.6;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    h1 {
+      color: #1e3a8a;
+      margin-bottom: 6px;
+    }
+    .subtitle {
+      color: #64748b;
+      font-size: 0.95rem;
+    }
+    .student-card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 18px 24px;
+      margin-bottom: 20px;
+      border: 1px solid var(--border);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .info-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+      min-width: 180px;
+    }
+    .info-group label {
+      font-weight: 600;
+      color: #334155;
+      white-space: nowrap;
+    }
+    .info-group input {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.95rem;
+      outline: none;
+    }
+    .info-group input:disabled {
+      background-color: #f1f5f9;
+      color: #64748b;
+      cursor: not-allowed;
+    }
+    .status-bar {
+      position: sticky;
+      top: 15px;
+      z-index: 10;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 20px;
+      margin-bottom: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+    .status-info {
+      font-size: 1rem;
+      font-weight: 600;
+    }
+    .status-score {
+      color: var(--primary);
+    }
+    .card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 20px;
+      border: 1px solid var(--border);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+    .q-title {
+      font-weight: 600;
+      font-size: 1.1rem;
+      margin-bottom: 16px;
+    }
+    .q-type {
+      display: inline-block;
+      background: #e0e7ff;
+      color: #4338ca;
+      font-size: 0.8rem;
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin-right: 6px;
+    }
+    .locked-badge {
+      display: inline-block;
+      background: #fee2e2;
+      color: #991b1b;
+      font-size: 0.8rem;
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin-left: 6px;
+    }
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .option-label {
+      display: flex;
+      align-items: flex-start;
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .option-label:hover {
+      background: var(--primary-light);
+      border-color: #93c5fd;
+    }
+    .option-label.disabled {
+      cursor: not-allowed;
+      background: #f1f5f9;
+      opacity: 0.85;
+      border-color: #cbd5e1;
+    }
+    .option-label input {
+      margin-top: 5px;
+      margin-right: 12px;
+      transform: scale(1.15);
+    }
+    .btn-submit-q {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 9px 20px;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 14px;
+    }
+    .result-box {
+      margin-top: 16px;
+      padding: 16px;
+      border-radius: 8px;
+      display: none;
+    }
+    .result-correct {
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      color: #166534;
+    }
+    .result-wrong {
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      color: #991b1b;
+    }
+    .explanation {
+      margin-top: 10px;
+      font-size: 0.95rem;
+      color: #334155;
+      background: #f8fafc;
+      padding: 12px;
+      border-radius: 6px;
+      border-left: 4px solid var(--primary);
+    }
+    .upload-banner {
+      display: none;
+      background: #f8fafc;
+      border: 2px dashed #94a3b8;
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      margin-top: 30px;
+      font-size: 1.05rem;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <h1>🧪 高中化學：化學平衡正式測驗</h1>
+      <p class="subtitle">⚠️ 每題僅有一次作答機會。全卷作答完畢後成績將自動上傳試算表備查。</p>
+    </header>
+
+    <!-- 考生基本資料欄 -->
+    <div class="student-card">
+      <div class="info-group">
+        <label for="studentClass">班級：</label>
+        <input type="text" id="studentClass" placeholder="例如：高二甲班">
+      </div>
+      <div class="info-group">
+        <label for="studentSeat">座號：</label>
+        <input type="text" id="studentSeat" placeholder="例如：12">
+      </div>
+      <div class="info-group">
+        <label for="studentName">姓名：</label>
+        <input type="text" id="studentName" placeholder="請輸入姓名">
+      </div>
+    </div>
+
+    <!-- 頂部即時狀態統計 -->
+    <div class="status-bar">
+      <div class="status-info">已完成：<span id="answeredCount">0</span> / <span id="totalCount">0</span> 題</div>
+      <div class="status-info status-score">目前得分：<span id="scoreText">0</span> 分</div>
+    </div>
+
+    <form id="quizForm">
+      <div id="questionsContainer"></div>
+    </form>
+
+    <div id="uploadBanner" class="upload-banner"></div>
+  </div>
+
+  <script>
+    // ⚠️ 請替換為您從 Apps Script 取得的 Web App 網址
+    const GOOGLE_SCRIPT_URL = "YOUR_GOOGLE_APPS_SCRIPT_URL_HERE";
+
+    const quizData = [
+      {
+        id: 1,
+        title: "25 ℃ 時，2Cl(g) ⇌ Cl2(g) 之 Kc＝1 × 10^38，若原有 [Cl]＝1 M，則平衡時 Cl2 之濃度為多少 M？",
+        type: "single",
+        options: [
+          { key: "A", text: "0.1" },
+          { key: "B", text: "0.5" },
+          { key: "C", text: "1" },
+          { key: "D", text: "10^-38" }
+        ],
+        answer: ["B"],
+        explanation: "由 2Cl(g) ⇌ Cl2(g) 之 Kc 值極大，可知此反應趨向右方的程度極高，幾乎完全反應。原有 [Cl]=1 M，完全反應時 [Cl2] ≈ 1/2 = 0.5 M。"
+      },
+      {
+        id: 2,
+        title: "氫和碘蒸氣各 1.6 mol 於 2.0 L 容器中反應生成碘化氫，若 350 ℃ 時的平衡常數為 36.0，則平衡時有關各反應物及產物的濃度，哪些是正確的？",
+        type: "multiple",
+        options: [
+          { key: "A", text: "[H2]＝0.1 M" },
+          { key: "B", text: "[I2]＝0.2 M" },
+          { key: "C", text: "[HI]＝1.2 M" },
+          { key: "D", text: "[H2]＝1.2 M" },
+          { key: "E", text: "[HI]＝0.2 M" }
+        ],
+        answer: ["B", "C"],
+        explanation: "初濃度 [H2] = [I2] = 1.6/2.0 = 0.8 M。設達平衡反應消耗 x M，則 [H2]=[I2]=0.8-x，[HI]=2x。平衡常數 (2x)^2 / (0.8-x)^2 = 36 => 2x / (0.8-x) = 6 => x = 0.6。平衡時 [H2]=[I2]=0.2 M，[HI]=1.2 M。"
+      },
+      {
+        id: 3,
+        title: "下列各平衡系中，何者的平衡常數會隨溫度升高而變大？",
+        type: "multiple",
+        options: [
+          { key: "A", text: "N2O4(g) ⇌ 2NO2(g)" },
+          { key: "B", text: "Cl2(g) ⇌ 2Cl(g)" },
+          { key: "C", text: "N2(g) + 3H2(g) ⇌ 2NH3(g)" },
+          { key: "D", text: "H+(aq) + OH-(aq) ⇌ H2O(l)" },
+          { key: "E", text: "NaNO3(s) ⇌ NaNO2(s) + 1/2 O2(g)" }
+        ],
+        answer: ["A", "B", "E"],
+        explanation: "對吸熱反應（ΔH > 0）而言，升高溫度平衡向吸熱反應方向移動，平衡常數增大。(A)(B)(E)均為吸熱分解反應；(C)合成氨為放熱；(D)酸鹼中和為放熱反應。"
+      },
+      {
+        id: 4,
+        title: "下列平衡系，何者 Kp 與 Kc 之數值與單位無關（即 Kp = Kc）？",
+        type: "multiple",
+        options: [
+          { key: "A", text: "CO(g) + 1/2 O2(g) ⇌ CO2(g)" },
+          { key: "B", text: "C2H4(g) + H2(g) ⇌ C2H6(g)" },
+          { key: "C", text: "H2(g) + F2(g) ⇌ 2HF(g)" },
+          { key: "D", text: "N2(g) + 3F2(g) ⇌ 2NF3(g)" },
+          { key: "E", text: "H2O(g) + CO(g) ⇌ H2(g) + CO2(g)" }
+        ],
+        answer: ["C", "E"],
+        explanation: "Kp = Kc(RT)^Δn。當氣體莫耳數差 Δn = 0 時，(RT)^0 = 1，故 Kp = Kc 且與單位無關。(C) Δn = 2 - (1+1) = 0；(E) Δn = (1+1) - (1+1) = 0。"
+      },
+      {
+        id: 5,
+        title: "將適量的 Ag2CrO4 溶入水中達飽和後，測得 [CrO4^2-]＝3.00 × 10^-4 M，求 Ag2CrO4 的 Ksp 為何？",
+        type: "single",
+        options: [
+          { key: "A", text: "1.08 × 10^-10" },
+          { key: "B", text: "2.70 × 10^-11" },
+          { key: "C", text: "9.00 × 10^-8" },
+          { key: "D", text: "7.20 × 10^-11" },
+          { key: "E", text: "3.60 × 10^-7" }
+        ],
+        answer: ["A"],
+        explanation: "Ag2CrO4(s) ⇌ 2Ag+(aq) + CrO4^2-(aq)。[Ag+] = 2 × [CrO4^2-] = 6.00 × 10^-4 M。Ksp = [Ag+]^2 × [CrO4^2-] = (6.00 × 10^-4)^2 × (3.00 × 10^-4) = 1.08 × 10^-10。"
+      }
+    ];
+
+    const statusMap = {};
+    const detailRecords = {};
+    let isUploaded = false;
+
+    function renderQuiz() {
+      const container = document.getElementById('questionsContainer');
+      container.innerHTML = '';
+      document.getElementById('totalCount').innerText = quizData.length;
+
+      quizData.forEach((q, idx) => {
+        const isSingle = q.type === 'single';
+        const inputType = isSingle ? 'radio' : 'checkbox';
+        const typeBadge = isSingle ? '單選題' : '多選題';
+
+        let optionsHtml = '';
+        q.options.forEach(opt => {
+          const changeHandler = isSingle ? `onchange="submitAndLock(${q.id})"` : '';
+          optionsHtml += `
+            <label class="option-label" id="label_${q.id}_${opt.key}">
+              <input type="${inputType}" name="q_${q.id}" value="${opt.key}" ${changeHandler}>
+              <span><strong>(${opt.key})</strong> ${opt.text}</span>
+            </label>
+          `;
+        });
+
+        const actionButton = !isSingle
+          ? `<button type="button" id="btn_${q.id}" class="btn-submit-q" onclick="submitAndLock(${q.id})">確定送出本題（鎖定）</button>`
+          : '';
+
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.id = `card_${q.id}`;
+        card.innerHTML = `
+          <div class="q-title">
+            <span class="q-type">${typeBadge}</span>
+            <span id="locked_badge_${q.id}"></span>
+            第 ${idx + 1} 題：${q.title}
+          </div>
+          <div class="options">${optionsHtml}</div>
+          ${actionButton}
+          <div class="result-box" id="result_${q.id}"></div>
+        `;
+        container.appendChild(card);
+      });
+
+      updateStatus();
+    }
+
+    function validateStudentInfo() {
+      const sClass = document.getElementById('studentClass').value.trim();
+      const sSeat = document.getElementById('studentSeat').value.trim();
+      const sName = document.getElementById('studentName').value.trim();
+
+      if (!sClass || !sSeat || !sName) {
+        alert('請先填寫「班級」、「座號」與「姓名」後再開始作答！');
+        return false;
+      }
+
+      document.getElementById('studentClass').disabled = true;
+      document.getElementById('studentSeat').disabled = true;
+      document.getElementById('studentName').disabled = true;
+      return true;
+    }
+
+    function submitAndLock(id) {
+      if (statusMap[id] !== undefined) return;
+
+      if (!validateStudentInfo()) {
+        const inputs = document.querySelectorAll(`input[name="q_${id}"]`);
+        inputs.forEach(i => i.checked = false);
+        return;
+      }
+
+      const q = quizData.find(item => item.id === id);
+      if (!q) return;
+
+      const checkedInputs = document.querySelectorAll(`input[name="q_${id}"]:checked`);
+      const userAnswers = Array.from(checkedInputs).map(i => i.value).sort();
+      const correctAnswers = [...q.answer].sort();
+
+      const resultBox = document.getElementById(`result_${id}`);
+
+      if (userAnswers.length === 0) {
+        alert('請先勾選答案再送出本題！');
+        return;
+      }
+
+      // 鎖定本題
+      const allInputs = document.querySelectorAll(`input[name="q_${id}"]`);
+      allInputs.forEach(input => input.disabled = true);
+      q.options.forEach(opt => {
+        const label = document.getElementById(`label_${id}_${opt.key}`);
+        if (label) label.classList.add('disabled');
+      });
+
+      const submitBtn = document.getElementById(`btn_${id}`);
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.style.display = 'none';
+      }
+
+      const lockBadge = document.getElementById(`locked_badge_${id}`);
+      if (lockBadge) {
+        lockBadge.className = 'locked-badge';
+        lockBadge.innerText = '已鎖定';
+      }
+
+      // 判斷對錯
+      const isCorrect = userAnswers.length === correctAnswers.length &&
+                        userAnswers.every((val, index) => val === correctAnswers[index]);
+
+      resultBox.style.display = 'block';
+      if (isCorrect) {
+        resultBox.className = 'result-box result-correct';
+        resultBox.innerHTML = `
+          <strong>✔ 答對了！</strong> 正確答案：(${correctAnswers.join(', ')})
+          <div class="explanation"><strong>💡 解題步驟與觀念：</strong><br>${q.explanation}</div>
+        `;
+      } else {
+        resultBox.className = 'result-box result-wrong';
+        resultBox.innerHTML = `
+          <strong>✖ 答錯了！</strong> 正確答案是：(${correctAnswers.join(', ')})<br>
+          您的作答：(${userAnswers.join(', ')})
+          <div class="explanation"><strong>💡 解題步驟與觀念：</strong><br>${q.explanation}</div>
+        `;
+      }
+
+      statusMap[id] = isCorrect;
+      detailRecords[`Q${id}`] = {
+        userAnswers: userAnswers,
+        isCorrect: isCorrect
+      };
+
+      updateStatus();
+    }
+
+    function updateStatus() {
+      const answeredKeys = Object.keys(statusMap);
+      const answeredCount = answeredKeys.length;
+      let correctCount = 0;
+
+      answeredKeys.forEach(k => {
+        if (statusMap[k]) correctCount++;
+      });
+
+      document.getElementById('answeredCount').innerText = answeredCount;
+      const score = Math.round((correctCount / quizData.length) * 100);
+      document.getElementById('scoreText').innerText = score;
+
+      // 當所有題目皆完成時，自動送出成績至 Google Sheets
+      if (answeredCount === quizData.length && !isUploaded) {
+        uploadResultsToSheet(score, correctCount, quizData.length);
+      }
+    }
+
+    function uploadResultsToSheet(score, correctCount, totalCount) {
+      isUploaded = true;
+      const banner = document.getElementById('uploadBanner');
+      banner.style.display = 'block';
+      banner.style.color = '#2563eb';
+      banner.innerText = '⏳ 全卷作答完畢，正在上傳成績至教師端試算表...';
+
+      const payload = {
+        studentClass: document.getElementById('studentClass').value.trim(),
+        studentSeat: document.getElementById('studentSeat').value.trim(),
+        studentName: document.getElementById('studentName').value.trim(),
+        score: score,
+        correctCount: correctCount,
+        totalCount: totalCount,
+        details: detailRecords
+      };
+
+      fetch(GOOGLE_SCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors', // 繞過跨網域限制
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      })
+      .then(() => {
+        banner.style.color = '#16a34a';
+        banner.innerText = '✅ 成績已成功登錄至試算表！本次測驗已結束。';
+      })
+      .catch((err) => {
+        banner.style.color = '#dc2626';
+        banner.innerText = '⚠️ 成績上傳失敗，請通知任課老師或檢查網路連線。';
+      });
+    }
+
+    renderQuiz();
+  </script>
+</body>
+</html>
