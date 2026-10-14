@@ -133,9 +133,17 @@
       padding: 12px 20px;
       margin-bottom: 24px;
       display: none;
+      flex-wrap: wrap;
+      gap: 12px;
       justify-content: space-between;
       align-items: center;
       box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+    .status-left {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      flex-wrap: wrap;
     }
     .status-info {
       font-size: 1rem;
@@ -143,6 +151,20 @@
     }
     .status-score {
       color: var(--primary);
+    }
+    .btn-early-finish {
+      background: #fff1f2;
+      border: 1px solid #fecdd3;
+      color: #e11d48;
+      font-size: 0.88rem;
+      font-weight: 600;
+      padding: 6px 14px;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-early-finish:hover {
+      background: #ffe4e6;
     }
 
     .card {
@@ -184,6 +206,16 @@
     .level-2 { background: #fef3c7; color: #b45309; }
     .level-3 { background: #fee2e2; color: #991b1b; }
 
+    .concept-tag {
+      display: inline-block;
+      background: #f1f5f9;
+      color: #475569;
+      font-size: 0.8rem;
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin-right: 6px;
+    }
+
     .locked-badge {
       display: inline-block;
       background: #fee2e2;
@@ -218,7 +250,6 @@
       border-color: #cbd5e1;
     }
 
-    /* 亮色回饋樣式 */
     .option-label.opt-selected-correct {
       background-color: #dcfce7 !important;
       border-color: #22c55e !important;
@@ -377,6 +408,27 @@
       font-size: 0.95rem;
       color: #1e293b;
     }
+    .retry-box {
+      text-align: center;
+      margin-top: 24px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
+    .btn-retry {
+      background: #16a34a;
+      color: #ffffff;
+      border: none;
+      padding: 12px 30px;
+      border-radius: 30px;
+      font-size: 1.05rem;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(22, 163, 74, 0.25);
+      transition: all 0.2s;
+    }
+    .btn-retry:hover {
+      background: #15803d;
+    }
 
     sub, sup {
       font-size: 75%;
@@ -393,7 +445,7 @@
   <div class="container">
     <header>
       <h1>🧪 高中化學：化學平衡 AI 自適應測驗</h1>
-      <p class="subtitle">全卷共 20 題 ｜ 智慧難度調節、選項即時紅綠回饋、熔斷保護機制與能力診斷總評。</p>
+      <p class="subtitle">全卷共 20 題 ｜ 智慧同類晉級、選項即時回饋、隨時結算與個人學習診斷總評。</p>
     </header>
 
     <div class="student-card">
@@ -416,7 +468,7 @@
       <div class="mode-title">🎯 請選擇作答模式（未填寫資料將以訪客直接作答）：</div>
       <div class="mode-btns">
         <button type="button" class="btn-mode" onclick="startQuiz('adaptive')">
-          🤖 AI 智慧自適應模式<br><small style="font-weight: normal;">(答對升級挑戰；基礎題連續答錯自動熔斷保護)</small>
+          🤖 AI 智慧自適應模式<br><small style="font-weight: normal;">(同類題螺旋晉級、可隨時結算看診斷)</small>
         </button>
         <button type="button" class="btn-mode" onclick="startQuiz('all')">
           📋 全卷標準模式<br><small style="font-weight: normal;">(一次展開全部 20 題)</small>
@@ -425,8 +477,13 @@
     </div>
 
     <div class="status-bar" id="statusBar">
-      <div class="status-info">已作答：<span id="answeredCount">0</span> / <span id="totalDisplayCount">20</span> 題</div>
-      <div class="status-info status-score">目前得分：<span id="scoreText">0</span> 分</div>
+      <div class="status-left">
+        <div class="status-info">已作答：<span id="answeredCount">0</span> / <span id="totalDisplayCount">20</span> 題</div>
+        <div class="status-info status-score">目前得分：<span id="scoreText">0</span> 分</div>
+      </div>
+      <button type="button" id="btnEarlyFinish" class="btn-early-finish" onclick="triggerEarlyFinish()">
+        🏁 寫累了，提早結算看診斷
+      </button>
     </div>
 
     <form id="quizForm">
@@ -448,6 +505,9 @@
       </div>
       <div id="reportSections"></div>
       <div id="studyAdvice" class="study-advice-box"></div>
+      <div class="retry-box">
+        <button type="button" class="btn-retry" onclick="resetToHome()">🔄 繼續挑戰（返回重測）</button>
+      </div>
     </div>
   </div>
 
@@ -771,8 +831,10 @@
 
     let selectedMode = '';
     let currentDifficulty = 1;
-    let consecutiveBaseWrongCount = 0; // 基礎題連續答錯次數
-    let isTerminatedEarly = false;     // 是否觸發熔斷提前結束
+    let currentConcept = null; // 當前所屬概念（同類晉級用）
+    let consecutiveBaseWrongCount = 0;
+    let isTerminatedEarly = false;
+    let isManualFinished = false; // 學生自願提早結算
     const servedQuestionIds = [];
     const statusMap = {};
     const detailRecords = {};
@@ -809,10 +871,15 @@
       document.getElementById('modeCard').style.display = 'none';
       document.getElementById('statusBar').style.display = 'flex';
 
+      // 只有自適應模式提供「提早結算」按鈕
+      document.getElementById('btnEarlyFinish').style.display = (mode === 'adaptive') ? 'inline-block' : 'none';
+
       if (mode === 'adaptive') {
         currentDifficulty = 1;
+        currentConcept = null;
         consecutiveBaseWrongCount = 0;
         isTerminatedEarly = false;
+        isManualFinished = false;
         renderNextAdaptiveQuestion();
       } else {
         rawQuizData.forEach((q, idx) => {
@@ -821,19 +888,38 @@
       }
     }
 
+    // 核心：同概念優先之自適應出題演算法
     function pickNextAdaptiveQuestion() {
       const unserved = rawQuizData.filter(q => !servedQuestionIds.includes(q.id));
       if (unserved.length === 0) return null;
 
-      let candidates = unserved.filter(q => q.level === currentDifficulty);
-      if (candidates.length === 0) {
+      let candidates = [];
+
+      // 1. 若有指定前一題的概念，優先尋找「同概念 且 符合目標難度」的題目
+      if (currentConcept) {
+        candidates = unserved.filter(q => q.concept === currentConcept && q.level === currentDifficulty);
+      }
+
+      // 2. 若同概念下沒有該難度的題目，改找「同難度的其他概念題目」
+      if (!candidates || candidates.length === 0) {
+        candidates = unserved.filter(q => q.level === currentDifficulty);
+      }
+
+      // 3. 若同難度題目皆已出完，進行平滑降級或升級
+      if (!candidates || candidates.length === 0) {
         if (currentDifficulty === 3) candidates = unserved.filter(q => q.level === 2);
         else if (currentDifficulty === 1) candidates = unserved.filter(q => q.level === 2);
         if (!candidates || candidates.length === 0) candidates = unserved;
       }
 
       const randomIndex = Math.floor(Math.random() * candidates.length);
-      return candidates[randomIndex];
+      const chosen = candidates[randomIndex];
+      
+      // 更新當前概念鎖定
+      if (chosen) {
+        currentConcept = chosen.concept;
+      }
+      return chosen;
     }
 
     function renderNextAdaptiveQuestion() {
@@ -855,6 +941,8 @@
       let levelClass = 'level-1';
       if (q.level === 2) { levelText = '⭐⭐ 中階題'; levelClass = 'level-2'; }
       if (q.level === 3) { levelText = '⭐⭐⭐ 挑戰題'; levelClass = 'level-3'; }
+
+      const conceptInfo = CONCEPT_MAP[q.concept] ? CONCEPT_MAP[q.concept].name : '';
 
       let optionsHtml = '';
       q.options.forEach(opt => {
@@ -878,6 +966,7 @@
         <div class="q-title">
           <span class="q-type">${typeBadge}</span>
           <span class="level-badge ${levelClass}">${levelText}</span>
+          <span class="concept-tag">📌 ${conceptInfo}</span>
           <span id="locked_badge_${q.id}"></span>
           第 ${displayNum} 題：${formatChem(q.title)}
         </div>
@@ -905,7 +994,6 @@
         return;
       }
 
-      // 禁用輸入
       const allInputs = document.querySelectorAll(`input[name="q_${id}"]`);
       allInputs.forEach(input => input.disabled = true);
 
@@ -953,9 +1041,11 @@
         `;
 
         if (q.level === 1) {
-          consecutiveBaseWrongCount = 0; // 答對基礎題則重置連續錯誤計數
+          consecutiveBaseWrongCount = 0;
         }
+        // 答對向上晉級（下一題演算法會優先尋找同概念之進階題）
         if (currentDifficulty < 3) currentDifficulty++;
+        currentConcept = q.concept; // 鎖定同概念
       } else {
         resultBox.className = 'result-box result-wrong';
         resultBox.innerHTML = `
@@ -964,7 +1054,6 @@
           <div class="explanation"><strong>💡 解題步驟與觀念：</strong><br>${formatChem(q.explanation)}</div>
         `;
 
-        // 熔斷機制檢查：若基礎題（Level 1）答錯
         if (q.level === 1) {
           consecutiveBaseWrongCount++;
         }
@@ -978,20 +1067,38 @@
         isCorrect: isCorrect
       };
 
-      // 檢查是否達到熔斷條件（自適應模式下基礎題連續錯達 3 題）
+      // 連續 3 題基礎題錯誤觸發自動熔斷
       if (selectedMode === 'adaptive' && consecutiveBaseWrongCount >= 3) {
         isTerminatedEarly = true;
       }
 
       updateStatus();
 
-      // 若未熔斷且題目尚未出完，則顯示下一題按鈕
-      if (selectedMode === 'adaptive' && !isTerminatedEarly && servedQuestionIds.length < rawQuizData.length) {
+      if (selectedMode === 'adaptive' && !isTerminatedEarly && !isManualFinished && servedQuestionIds.length < rawQuizData.length) {
         const nextBox = document.getElementById('adaptiveNextBox');
         const nextBtn = document.getElementById('btnNextAdaptive');
         nextBox.style.display = 'block';
-        nextBtn.innerText = `✨ 進入第 ${servedQuestionIds.length + 1} 題（AI 智慧動態難度）`;
+        nextBtn.innerText = `✨ 進入第 ${servedQuestionIds.length + 1} 題（AI 動態同類進階）`;
       }
+    }
+
+    // 隨時提早結算
+    function triggerEarlyFinish() {
+      const answeredKeys = Object.keys(statusMap);
+      if (answeredKeys.length === 0) {
+        alert("您尚未作答任何題目，請至少作答 1 題後再進行結算！");
+        return;
+      }
+
+      const confirmFinish = confirm(
+        `您目前已完成 ${answeredKeys.length} 題，確定要現在結算並產出能力診斷總評嗎？\n（成績將立即同步上傳試算表）`
+      );
+      if (!confirmFinish) return;
+
+      isManualFinished = true;
+      document.getElementById('adaptiveNextBox').style.display = 'none';
+      document.getElementById('btnEarlyFinish').style.display = 'none';
+      updateStatus();
     }
 
     function updateStatus() {
@@ -1003,16 +1110,17 @@
         if (statusMap[k]) correctCount++;
       });
 
-      const totalTarget = isTerminatedEarly ? answeredCount : (selectedMode === 'adaptive' ? answeredCount : rawQuizData.length);
       document.getElementById('answeredCount').innerText = answeredCount;
-      document.getElementById('totalDisplayCount').innerText = isTerminatedEarly ? `${answeredCount}（已觸發停損保護）` : rawQuizData.length;
 
-      // 成績計算：以實際完成題數計算得分率
+      let displayStatus = `${rawQuizData.length}`;
+      if (isTerminatedEarly) displayStatus = `${answeredCount}（已觸發停損保護）`;
+      else if (isManualFinished) displayStatus = `${answeredCount}（學生自願提早結算）`;
+      document.getElementById('totalDisplayCount').innerText = displayStatus;
+
       const score = answeredCount > 0 ? Math.round((correctCount / answeredCount) * 100) : 0;
       document.getElementById('scoreText').innerText = score;
 
-      // 判斷是否結束測驗：(1) 全部 20 題做完 或 (2) 基礎題連續答錯觸發提前終止
-      const shouldFinish = (answeredCount === rawQuizData.length) || isTerminatedEarly;
+      const shouldFinish = (answeredCount === rawQuizData.length) || isTerminatedEarly || isManualFinished;
 
       if (shouldFinish && !isUploaded) {
         uploadResultsToSheet(score, correctCount, answeredCount);
@@ -1033,6 +1141,8 @@
       let bannerText = `考生：${sClass} ${sSeat}號 ${sName} ｜ 目前得分：${score} 分（答對 ${correctCount} / 共作答 ${totalAnswered} 題）`;
       if (isTerminatedEarly) {
         bannerText += `<br><span style="color:#dc2626; font-weight:bold;">⚠️ 系統提示：因基礎觀念題連續答錯，測驗已啟動熔斷保護機制提前結束。</span>`;
+      } else if (isManualFinished) {
+        bannerText += `<br><span style="color:#2563eb; font-weight:bold;">🏁 學生自主結算：本次測驗依完成題數即時產出診斷報告。</span>`;
       }
       studentInfo.innerHTML = bannerText;
 
@@ -1108,18 +1218,49 @@
 
       let adviceText = '<strong>💡 AI 學習導航建議：</strong><br>';
       if (isTerminatedEarly) {
-        adviceText += '<span style="color:#b91c1c;"><strong>別氣餒！這是最適合您的複習起點：</strong></span><br>系統發現您在「平衡定義、動態平衡特徵、平衡常數意義」等基礎觀念上可能出現了觀念盲區。建議先暫停刷題，翻開課本第 1~2 節，重點理解「正反應速率＝逆反應速率 ≠ 0」以及「平衡常數 Kc 不受濃度影響」的本質，讀懂後再重新挑戰！';
+        adviceText += '<span style="color:#b91c1c;"><strong>先別氣餒！這是最好的重新出發點：</strong></span><br>系統發現您在基礎概念上（如平衡定義或平衡常數意義）有些混淆。建議先翻開講義或課本第 1~2 節，把「正逆反應速率相等」與「平衡移動」的核心概念讀熟，稍後點擊下方按鈕重新挑戰！';
       } else if (score >= 85) {
-        adviceText += '表現極為優異！對各類平衡移動與綜合計算具備高度熟練度。';
+        adviceText += '表現極為優秀！對各類平衡移動與綜合計算具備高度熟練度。';
       } else if (score >= 60) {
-        adviceText += '整體基礎觀念尚可，但在多重平衡與計算題型中容易疏漏，建議針對黃色與紅色區域加強演練。';
+        adviceText += '整體基礎觀念良好，但在綜合計算與沉澱平衡等難題上容易疏漏，建議針對黃色與紅色區域加強演練。';
       } else {
-        adviceText += '建議先從基礎概念與勒沙特列原理方向判斷開始複習，建立自信後再進入定量計算。';
+        adviceText += '建議先從基礎概念與勒沙特列原理方向判斷開始複習，循序漸進建立信心。';
       }
       advice.innerHTML = adviceText;
 
       reportCard.style.display = 'block';
       reportCard.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // 重設回到首頁（保留學生已填寫的身分資料）
+    function resetToHome() {
+      // 清空題目畫面與紀錄
+      document.getElementById('questionsContainer').innerHTML = '';
+      document.getElementById('reportCard').style.display = 'none';
+      document.getElementById('uploadBanner').style.display = 'none';
+      document.getElementById('statusBar').style.display = 'none';
+      document.getElementById('adaptiveNextBox').style.display = 'none';
+
+      // 重新顯示模式選擇卡
+      document.getElementById('modeCard').style.display = 'block';
+
+      // 釋放學生資料鎖定（方便學生修改或維持）
+      document.getElementById('studentClass').disabled = false;
+      document.getElementById('studentSeat').disabled = false;
+      document.getElementById('studentName').disabled = false;
+
+      // 重置運作變數
+      servedQuestionIds.length = 0;
+      for (let k in statusMap) delete statusMap[k];
+      for (let k in detailRecords) delete detailRecords[k];
+      currentDifficulty = 1;
+      currentConcept = null;
+      consecutiveBaseWrongCount = 0;
+      isTerminatedEarly = false;
+      isManualFinished = false;
+      isUploaded = false;
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function uploadResultsToSheet(score, correctCount, totalCount) {
@@ -1129,7 +1270,9 @@
       banner.style.color = '#2563eb';
       banner.innerText = isTerminatedEarly
         ? '⏳ 測驗已提前終止，正在將已作答資料與能力分析上傳至教師端試算表...'
-        : '⏳ 作答完畢，正在上傳成績至教師端試算表...';
+        : (isManualFinished
+          ? '⏳ 學生提早結算，正在將已作答資料上傳至教師端試算表...'
+          : '⏳ 作答完畢，正在上傳成績至教師端試算表...');
 
       const payload = {
         studentClass: document.getElementById('studentClass').value.trim(),
@@ -1151,9 +1294,7 @@
       })
       .then(() => {
         banner.style.color = '#16a34a';
-        banner.innerText = isTerminatedEarly
-          ? '✅ 測驗已提前結束，紀錄已登錄至試算表！請參閱下方診斷總評：'
-          : '✅ 成績與詳細作答紀錄已成功登錄至試算表！請參閱下方診斷總評：';
+        banner.innerText = '✅ 成績與詳細作答紀錄已成功登錄至試算表！請參閱下方診斷總評：';
       })
       .catch((err) => {
         banner.style.color = '#dc2626';
