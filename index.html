@@ -543,6 +543,34 @@
     const detailRecords = {};
     let isUploaded = false;
 
+    // 自動將化學式、下標數字、離子符號與次方轉換為標準 HTML 格式
+    function formatChem(str) {
+      if (!str) return '';
+      return str
+        // 替換 Kc, Kp, Ksp
+        .replace(/\bKc\b/g, '<i>K</i><sub>c</sub>')
+        .replace(/\bKp\b/g, '<i>K</i><sub>p</sub>')
+        .replace(/\bKsp\b/g, '<i>K</i><sub>sp</sub>')
+        // 替換常見離子
+        .replace(/H\+/g, 'H<sup>+</sup>')
+        .replace(/OH\-/g, 'OH<sup>-</sup>')
+        .replace(/Ag\+/g, 'Ag<sup>+</sup>')
+        .replace(/Cl\-/g, 'Cl<sup>-</sup>')
+        .replace(/Ba2\+/g, 'Ba<sup>2+</sup>')
+        .replace(/Fe3\+/g, 'Fe<sup>3+</sup>')
+        .replace(/SCN\-/g, 'SCN<sup>-</sup>')
+        .replace(/FeSCN2\+/g, 'FeSCN<sup>2+</sup>')
+        .replace(/CrO4\^?2\-/g, 'CrO<sub>4</sub><sup>2-</sup>')
+        .replace(/NH4\+/g, 'NH<sub>4</sub><sup>+</sup>')
+        // 替換 10^-4, 10^38 等科學記號
+        .replace(/10\^(-?\d+)/g, '10<sup>$1</sup>')
+        // 替換化學式中的下標數字 (例如 Cl2, H2O, N2O4, NO2, CaCO3, CO2, SO2, SO3, PCl5, PCl3)
+        .replace(/([A-Za-z\)])(\d+)/g, function(match, p1, p2) {
+          // 排除題目編號或一般數字情況
+          return p1 + '<sub>' + p2 + '</sub>';
+        });
+    }
+
     function renderQuiz() {
       const container = document.getElementById('questionsContainer');
       container.innerHTML = '';
@@ -559,7 +587,7 @@
           optionsHtml += `
             <label class="option-label" id="label_${q.id}_${opt.key}">
               <input type="${inputType}" name="q_${q.id}" value="${opt.key}" ${changeHandler}>
-              <span><strong>(${opt.key})</strong> ${opt.text}</span>
+              <span><strong>(${opt.key})</strong> ${formatChem(opt.text)}</span>
             </label>
           `;
         });
@@ -575,7 +603,7 @@
           <div class="q-title">
             <span class="q-type">${typeBadge}</span>
             <span id="locked_badge_${q.id}"></span>
-            第 ${idx + 1} 題：${q.title}
+            第 ${idx + 1} 題：${formatChem(q.title)}
           </div>
           <div class="options">${optionsHtml}</div>
           ${actionButton}
