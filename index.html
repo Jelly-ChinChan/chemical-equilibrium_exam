@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>化學平衡正式測驗（成績自動登記版）</title>
+  <title>高中化學：化學平衡正式全卷測驗</title>
   <style>
     :root {
       --primary: #2563eb;
@@ -26,7 +26,7 @@
       padding: 20px;
     }
     .container {
-      max-width: 800px;
+      max-width: 850px;
       margin: 0 auto;
     }
     header {
@@ -111,7 +111,7 @@
     }
     .q-title {
       font-weight: 600;
-      font-size: 1.1rem;
+      font-size: 1.05rem;
       margin-bottom: 16px;
     }
     .q-type {
@@ -205,7 +205,8 @@
       padding: 20px;
       text-align: center;
       margin-top: 30px;
-      font-size: 1.05rem;
+      margin-bottom: 50px;
+      font-size: 1.1rem;
       font-weight: 600;
     }
   </style>
@@ -214,8 +215,8 @@
 
   <div class="container">
     <header>
-      <h1>🧪 高中化學：化學平衡正式測驗</h1>
-      <p class="subtitle">⚠️ 每題僅有一次作答機會。全卷作答完畢後成績將自動上傳試算表備查。</p>
+      <h1>🧪 高中化學：化學平衡正式全卷測驗</h1>
+      <p class="subtitle">共 20 題 ｜ ⚠️ 請先填妥班級、座號、姓名。每題作答後即鎖定並即時解析，全卷完成自動上傳成績。</p>
     </header>
 
     <!-- 考生基本資料欄 -->
@@ -236,7 +237,7 @@
 
     <!-- 頂部即時狀態統計 -->
     <div class="status-bar">
-      <div class="status-info">已完成：<span id="answeredCount">0</span> / <span id="totalCount">0</span> 題</div>
+      <div class="status-info">已完成：<span id="answeredCount">0</span> / <span id="totalCount">20</span> 題</div>
       <div class="status-info status-score">目前得分：<span id="scoreText">0</span> 分</div>
     </div>
 
@@ -248,9 +249,9 @@
   </div>
 
   <script>
-    // ⚠️ 請替換為您從 Apps Script 取得的 Web App 網址
-    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxxL8aghmYIWUVNeQRD9-4bXDAlVTZjd-5afQLoe1irKaFBM6VjTPE6yHvi-7PVTL6q/exec";
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxxL8aghmYIWUVNeQRD9-4bXDAIVTZjd-5afQLoe1irKaFBM6VjTPE6yHvi-7PVTL6q/exec";
 
+    // 完整 20 題化學平衡試題資料庫
     const quizData = [
       {
         id: 1,
@@ -263,7 +264,7 @@
           { key: "D", text: "10^-38" }
         ],
         answer: ["B"],
-        explanation: "由 2Cl(g) ⇌ Cl2(g) 之 Kc 值極大，可知此反應趨向右方的程度極高，幾乎完全反應。原有 [Cl]=1 M，完全反應時 [Cl2] ≈ 1/2 = 0.5 M。"
+        explanation: "由 2Cl(g) ⇌ Cl2(g) 之 Kc 值極大，可知此反應向右進行非常完全，故平衡時 [Cl2] ≈ 0.5 M。"
       },
       {
         id: 2,
@@ -277,7 +278,7 @@
           { key: "E", text: "[HI]＝0.2 M" }
         ],
         answer: ["B", "C"],
-        explanation: "初濃度 [H2] = [I2] = 1.6/2.0 = 0.8 M。設達平衡反應消耗 x M，則 [H2]=[I2]=0.8-x，[HI]=2x。平衡常數 (2x)^2 / (0.8-x)^2 = 36 => 2x / (0.8-x) = 6 => x = 0.6。平衡時 [H2]=[I2]=0.2 M，[HI]=1.2 M。"
+        explanation: "初濃度 [H2]=[I2]=1.6/2.0=0.8 M。反應式 H2 + I2 ⇌ 2HI，平衡時 [H2]=[I2]=0.8-x，[HI]=2x。 (2x)^2 / (0.8-x)^2 = 36 => 2x / (0.8-x) = 6 => x = 0.6。平衡時 [H2]=[I2]=0.2 M，[HI]=1.2 M。"
       },
       {
         id: 3,
@@ -291,10 +292,38 @@
           { key: "E", text: "NaNO3(s) ⇌ NaNO2(s) + 1/2 O2(g)" }
         ],
         answer: ["A", "B", "E"],
-        explanation: "對吸熱反應（ΔH > 0）而言，升高溫度平衡向吸熱反應方向移動，平衡常數增大。(A)(B)(E)均為吸熱分解反應；(C)合成氨為放熱；(D)酸鹼中和為放熱反應。"
+        explanation: "對吸熱反應（ΔH > 0）而言，升高溫度平衡向吸熱方向移動，平衡常數增大。(A)(B)(E)均為吸熱分解反應；(C)哈柏法製氨為放熱反應；(D)酸鹼中和為放熱反應。"
       },
       {
         id: 4,
+        title: "A2B4 ⇌ 2AB2 的反應熱為 ΔH，平衡常數為 K，在同溫時，反應 AB2 ⇌ 1/2 A2B4，反應熱（ΔH'）及平衡常數（K'）應各為何？",
+        type: "multiple",
+        options: [
+          { key: "A", text: "K'＝1/K" },
+          { key: "B", text: "ΔH'＝ΔH" },
+          { key: "C", text: "ΔH'＝-1/2 ΔH" },
+          { key: "D", text: "K'＝K" },
+          { key: "E", text: "(K')^2＝1/K" }
+        ],
+        answer: ["C", "E"],
+        explanation: "目標反應為原反應逆向並乘以 1/2。因此 ΔH' = -1/2 ΔH，K' = (1/K)^(1/2)，即 (K')^2 = 1/K。"
+      },
+      {
+        id: 5,
+        title: "下列有關平衡常數表示式的敘述中，何者不正確？",
+        type: "multiple",
+        options: [
+          { key: "A", text: "Hg2Cl2(s) 之 Ksp＝[Hg+]^2 [Cl-]^2" },
+          { key: "B", text: "NH3(aq) + H2O(l) ⇌ NH4+(aq) + OH-(aq) 之 Kc＝([NH4+][OH-]) / [NH3][H2O]" },
+          { key: "C", text: "2HgO(s) ⇌ 2Hg(l) + O2(g) 之 Kc＝[O2]" },
+          { key: "D", text: "CO(g) + 3H2(g) ⇌ CH4(g) + H2O(g) 之 Kc＝[CH4][H2O] / ([CO][H2])" },
+          { key: "E", text: "C2H5OH(l) ⇌ C2H5OH(g) 之 Kc＝1 / [C2H5OH(g)]" }
+        ],
+        answer: ["A", "B", "D", "E"],
+        explanation: "(A) Hg2Cl2(s) ⇌ Hg2^2+ + 2Cl-，Ksp = [Hg2^2+][Cl-]^2；(B) 水為溶劑不列入，Kc = [NH4+][OH-]/[NH3]；(D) 應為 Kc = [CH4][H2O]/([CO][H2]^3)；(E) 應為 Kc = [C2H5OH(g)]。"
+      },
+      {
+        id: 6,
         title: "下列平衡系，何者 Kp 與 Kc 之數值與單位無關（即 Kp = Kc）？",
         type: "multiple",
         options: [
@@ -305,10 +334,164 @@
           { key: "E", text: "H2O(g) + CO(g) ⇌ H2(g) + CO2(g)" }
         ],
         answer: ["C", "E"],
-        explanation: "Kp = Kc(RT)^Δn。當氣體莫耳數差 Δn = 0 時，(RT)^0 = 1，故 Kp = Kc 且與單位無關。(C) Δn = 2 - (1+1) = 0；(E) Δn = (1+1) - (1+1) = 0。"
+        explanation: "Kp = Kc(RT)^Δn，當氣體反應前後莫耳數差 Δn = 0 時，Kp = Kc 且與單位無關。(C) Δn = 2 - (1+1) = 0；(E) Δn = (1+1) - (1+1) = 0。"
       },
       {
-        id: 5,
+        id: 7,
+        title: "定溫下，當 A(aq) + 3B(aq) ⇌ 2C(aq) 達平衡時，下列敘述何者正確？",
+        type: "multiple",
+        options: [
+          { key: "A", text: "A、B、C 三者濃度皆維持不變" },
+          { key: "B", text: "正反應速率＝逆反應速率＝0" },
+          { key: "C", text: "A 的消耗速率＝B 的消耗速率＝C 的生成速率" },
+          { key: "D", text: "A、B、C 的莫耳數比 nA：nB：nC＝1：3：2" },
+          { key: "E", text: "[C]^2 / ([A][B]^3) 為定值" }
+        ],
+        answer: ["A", "E"],
+        explanation: "平衡時為動態平衡，正逆反應速率相等且不為0；各物質濃度維持不變；反應商等於平衡常數為定值；反應變化量才遵守係數比，現存莫耳數不一定為係數比。"
+      },
+      {
+        id: 8,
+        title: "在 1000 K 時，反應 CaCO3(s) ⇌ CaO(s) + CO2(g) 達平衡時 PCO2＝0.04 atm；同溫時，C(s) + CO2(g) ⇌ 2CO(g) 之 Kp＝1.96 atm。若將足量 C(s)、CaO(s) 和 CaCO3(s) 置於密閉容器，於 1000 K 達平衡時，下列何者正確？",
+        type: "multiple",
+        options: [
+          { key: "A", text: "PCO2 < 0.04 atm" },
+          { key: "B", text: "PCO＝0.28 atm" },
+          { key: "C", text: "C(s) 的量較開始反應時少" },
+          { key: "D", text: "CaO(s) 的量較開始反應時少" },
+          { key: "E", text: "CaCO3(s) 的量較開始反應時少" }
+        ],
+        answer: ["B", "C", "E"],
+        explanation: "足量 CaCO3 與 CaO 存在時 PCO2 恆等於 0.04 atm。(PCO)^2 / 0.04 = 1.96 => PCO = 0.28 atm。反應進行消耗 C 與 CaCO3 生成 CaO 與 CO。"
+      },
+      {
+        id: 9,
+        title: "下列平衡系中，各物質的濃度或壓力單位，不論以 mol/L 或 mmHg 表示，其平衡常數的數值均相同的為何？",
+        type: "multiple",
+        options: [
+          { key: "A", text: "2SO2(g) + O2(g) ⇌ 2SO3(g)" },
+          { key: "B", text: "PCl5(g) ⇌ PCl3(g) + Cl2(g)" },
+          { key: "C", text: "H2(g) + I2(g) ⇌ 2HI(g)" },
+          { key: "D", text: "N2(g) + 2O2(g) ⇌ 2NO2(g)" },
+          { key: "E", text: "CH4(g) + 2O2(g) ⇌ CO2(g) + 2H2O(g)" }
+        ],
+        answer: ["C", "E"],
+        explanation: "當氣體生成物係數和等於反應物係數和（Δn = 0）時，平衡常數為無因次量，數值不受單位換算影響。"
+      },
+      {
+        id: 10,
+        title: "某反應：aA(s) + bB(g) ⇌ cC(g) 達到平衡時，溫度升高時 C 的體積百分率下降；在同溫下壓力 P1 > P2 時，高壓 P1 的 C 體積百分率較大。由此可判斷何者正確？",
+        type: "multiple",
+        options: [
+          { key: "A", text: "此為放熱反應" },
+          { key: "B", text: "此為吸熱反應" },
+          { key: "C", text: "a + b < c" },
+          { key: "D", text: "a + b > c" },
+          { key: "E", text: "b > c" }
+        ],
+        answer: ["A", "D", "E"],
+        explanation: "升溫使 C 含量下降，代表正反應為放熱反應；加壓使平衡向氣體分子數減少方向移動，高壓下 C% 提高代表 b > c。因 a 為固體，故亦有 a + b > c。"
+      },
+      {
+        id: 11,
+        title: "設 A(g) + B(g) ⇌ 3C(g) 於 25 ℃ 時 Kc＝2，則在該溫度下 5 L 之容器中各置入下列物質，何者會趨向正反應？",
+        type: "multiple",
+        options: [
+          { key: "A", text: "A、B、C 各 2 mol" },
+          { key: "B", text: "A、B、C 分別為 1、2、3 mol" },
+          { key: "C", text: "A、B、C 分別為 2、2、3 mol" },
+          { key: "D", text: "A、B、C 分別為 2、1、2 mol" },
+          { key: "E", text: "A、B、C 分別為 2、1、3 mol" }
+        ],
+        answer: ["A", "C", "D"],
+        explanation: "Q = [C]^3 / ([A][B]) = (nC^3 / (nA*nB)) * (1/V)。(A) Q = (8/4)*(1/5)=0.4 < 2 向右；(B) Q=2.7 > 2 向左；(C) Q=1.35 < 2 向右；(D) Q=0.8 < 2 向右；(E) Q=2.7 > 2 向左。"
+      },
+      {
+        id: 12,
+        title: "平衡常數的大小，會受下列何種因素的影響？",
+        type: "multiple",
+        options: [
+          { key: "A", text: "反應的溫度" },
+          { key: "B", text: "反應物及產物的濃度" },
+          { key: "C", text: "反應容器的形狀與大小" },
+          { key: "D", text: "觸媒" },
+          { key: "E", text: "溶劑" }
+        ],
+        answer: ["A", "E"],
+        explanation: "平衡常數僅與反應本性、溫度以及溶劑種類有關。濃度、容器大小形狀、觸媒皆不影響平衡常數。"
+      },
+      {
+        id: 13,
+        title: "若化學反應 aA(g) + bB(g) ⇌ cC(g) + dD(g)，正逆速率常數為 k正、k逆，速率為 r正、r逆，平衡常數為 K，則平衡時何者正確？",
+        type: "multiple",
+        options: [
+          { key: "A", text: "K = [A]^a [B]^b / ([C]^c [D]^d)" },
+          { key: "B", text: "r正 = r逆" },
+          { key: "C", text: "k正 = k逆" },
+          { key: "D", text: "K = k逆 / k正" },
+          { key: "E", text: "K = k正 / k逆" }
+        ],
+        answer: ["B", "E"],
+        explanation: "達平衡時動態平衡，正逆反應速率相等（r正 = r逆）；基元反應中 K = k正 / k逆。"
+      },
+      {
+        id: 14,
+        title: "25 ℃ 下，下列哪些反應的 Kp > Kc？",
+        type: "multiple",
+        options: [
+          { key: "A", text: "CoO(s) + H2(g) ⇌ Co(s) + H2O(g)" },
+          { key: "B", text: "CaCO3(s) ⇌ CaO(s) + CO2(g)" },
+          { key: "C", text: "2H2(g) + O2(g) ⇌ 2H2O(g)" },
+          { key: "D", text: "N2O4(g) ⇌ 2NO2(g)" },
+          { key: "E", text: "N2H4(g) + O2(g) ⇌ N2(g) + 2H2O(g)" }
+        ],
+        answer: ["B", "D", "E"],
+        explanation: "Kp = Kc(RT)^Δn。在 25 ℃ (298 K) 時 RT ≈ 24.5 > 1。當氣體莫耳數差 Δn > 0 時，Kp > Kc。(B) Δn=1；(D) Δn=1；(E) Δn=1。"
+      },
+      {
+        id: 15,
+        title: "反應 A(g) + xB(g) ⇌ 2C(g) + 2D(g) 中，在不同溫度下 C 莫耳數與時間關係：T2 比 T1 先達平衡且 C 莫耳數較低；不同壓力下 C 莫耳數隨壓力增大而減少，且 T3 曲線在 T4 之上。下列敘述何者正確？",
+        type: "multiple",
+        options: [
+          { key: "A", text: "反應為放熱反應" },
+          { key: "B", text: "反應為吸熱反應" },
+          { key: "C", text: "T4 < T3" },
+          { key: "D", text: "T1 < T2" },
+          { key: "E", text: "x < 3" }
+        ],
+        answer: ["A", "D", "E"],
+        explanation: "T2 先達平衡故 T2 > T1；高溫下 C 產量少故正反應放熱；加壓不利於 C 生成，表示向右氣體係數變大，即 1 + x < 4，故 x < 3。"
+      },
+      {
+        id: 16,
+        title: "下列哪一平衡系，當壓縮使反應容器體積減半，並維持一半體積至新平衡，溫度不變，則指定物質新舊平衡濃度之關係何者為 1 < C新/C舊 < 2？",
+        type: "single",
+        options: [
+          { key: "A", text: "N2(g) + 3H2(g) ⇌ 2NH3(g) (針對 H2)" },
+          { key: "B", text: "H2(g) + I2(g) ⇌ 2HI(g) (針對 HI)" },
+          { key: "C", text: "Hg(l) ⇌ Hg(g) (針對 Hg(g))" },
+          { key: "D", text: "NH4HS(s) ⇌ NH3(g) + H2S(g) (針對 H2S)" },
+          { key: "E", text: "C2H4(g) + H2(g) ⇌ C2H6(g) (針對 C2H6)" }
+        ],
+        answer: ["A"],
+        explanation: "體積減半瞬間濃度加倍。(A) 加壓使平衡右移消耗 H2，故新平衡濃度介於 1～2 倍之間；(B) 平衡不移動恰為 2 倍；(C)(D) 蒸氣壓回復原值為 1 倍；(E) 平衡右移生成 C2H6 大於 2 倍。"
+      },
+      {
+        id: 17,
+        title: "若於下列各平衡系中施以括號內的措施，何者平衡系向右移動？",
+        type: "multiple",
+        options: [
+          { key: "A", text: "BaCrO4(s) ⇌ Ba2+(aq) + CrO4^2-(aq)（加濃 HNO3(aq)）" },
+          { key: "B", text: "N2O4(g) ⇌ 2NO2(g)（加熱）" },
+          { key: "C", text: "CH3COOH(aq) ⇌ CH3COO-(aq) + H+(aq)（加水）" },
+          { key: "D", text: "CaCO3(s) ⇌ CaO(s) + CO2(g)（加 CaCO3(s)）" },
+          { key: "E", text: "Ag+(aq) + Cl-(aq) ⇌ AgCl(s)（通入氨氣）" }
+        ],
+        answer: ["A", "B", "C"],
+        explanation: "(A) 加酸使鉻酸根轉為二鉻酸根，濃度降低促使平衡右移；(B) 吸熱反應升溫向右；(C) 弱酸加水稀釋解離度增大向右；(D) 純固體不影響平衡；(E) 氨與銀離子錯合，平衡向左。"
+      },
+      {
+        id: 18,
         title: "將適量的 Ag2CrO4 溶入水中達飽和後，測得 [CrO4^2-]＝3.00 × 10^-4 M，求 Ag2CrO4 的 Ksp 為何？",
         type: "single",
         options: [
@@ -319,7 +502,34 @@
           { key: "E", text: "3.60 × 10^-7" }
         ],
         answer: ["A"],
-        explanation: "Ag2CrO4(s) ⇌ 2Ag+(aq) + CrO4^2-(aq)。[Ag+] = 2 × [CrO4^2-] = 6.00 × 10^-4 M。Ksp = [Ag+]^2 × [CrO4^2-] = (6.00 × 10^-4)^2 × (3.00 × 10^-4) = 1.08 × 10^-10。"
+        explanation: "Ag2CrO4(s) ⇌ 2Ag+ + CrO4^2-。[Ag+] = 2 * [CrO4^2-] = 6.00 × 10^-4 M。Ksp = [Ag+]^2 [CrO4^2-] = (6.00 × 10^-4)^2 * (3.00 × 10^-4) = 1.08 × 10^-10。"
+      },
+      {
+        id: 19,
+        title: "PbCl2(s) 在 1 M Pb(NO3)2(aq)、1 M NaCl(aq)、1 M NaI(aq) 及純水中的溶解度依序為 s1、s2、s3 及 s4，則下列何者正確？",
+        type: "single",
+        options: [
+          { key: "A", text: "s1 > s2 > s3 > s4" },
+          { key: "B", text: "s3 > s4 > s1 > s2" },
+          { key: "C", text: "s3 > s4 > s2 > s1" },
+          { key: "D", text: "s4 > s3 > s1 > s2" },
+          { key: "E", text: "s4 = s3 > s1 > s2" }
+        ],
+        answer: ["B"],
+        explanation: "同離子效應使 s1、s2 小於純水 s4；且 Cl- 為平方項抑制更強烈故 s1 > s2。在 NaI 中生成溶度積更小的 PbI2 沉澱消耗 Pb2+，使得 PbCl2 溶解度大增，故 s3 > s4。順序：s3 > s4 > s1 > s2。"
+      },
+      {
+        id: 20,
+        title: "3.2×10^-2 M Fe(NO3)3(aq) 與 2×10^-3 M KSCN(aq) 各 10 mL 相混合達成平衡後，與 1.0×10^-3 M FeSCN^2+(aq) 標準液比色，當顏色深淺一樣時得 h標準：h未加＝7：10，求 Fe3+ + SCN- ⇌ FeSCN^2+ 之 K 值約為：",
+        type: "single",
+        options: [
+          { key: "A", text: "356" },
+          { key: "B", text: "241" },
+          { key: "C", text: "153" },
+          { key: "D", text: "83" }
+        ],
+        answer: ["C"],
+        explanation: "依比色法 c1*h1=c2*h2，平衡 [FeSCN^2+] = 1.0×10^-3 * (7/10) = 7.0×10^-4 M。各取 10 mL 稀釋後初濃度：[Fe3+]初 = 1.6×10^-2 M，[SCN-]初 = 1.0×10^-3 M。平衡時 [Fe3+] = 1.53×10^-2 M，[SCN-] = 3.0×10^-4 M。K = (7.0×10^-4) / (1.53×10^-2 * 3.0×10^-4) ≈ 153。"
       }
     ];
 
@@ -430,7 +640,6 @@
         lockBadge.innerText = '已鎖定';
       }
 
-      // 判斷對錯
       const isCorrect = userAnswers.length === correctAnswers.length &&
                         userAnswers.every((val, index) => val === correctAnswers[index]);
 
@@ -453,7 +662,7 @@
       statusMap[id] = isCorrect;
       detailRecords[`Q${id}`] = {
         userAnswers: userAnswers,
-        correctAnswers: correctAnswers, // 傳送正確答案以供比對著色
+        correctAnswers: correctAnswers,
         isCorrect: isCorrect
       };
 
@@ -473,7 +682,7 @@
       const score = Math.round((correctCount / quizData.length) * 100);
       document.getElementById('scoreText').innerText = score;
 
-      // 當所有題目皆完成時，自動送出成績至 Google Sheets
+      // 20 題皆完成時觸發上傳
       if (answeredCount === quizData.length && !isUploaded) {
         uploadResultsToSheet(score, correctCount, quizData.length);
       }
@@ -498,19 +707,19 @@
 
       fetch(GOOGLE_SCRIPT_URL, {
         method: 'POST',
-        mode: 'no-cors', // 繞過跨網域限制
+        mode: 'no-cors',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'text/plain;charset=utf-8'
         },
         body: JSON.stringify(payload)
       })
       .then(() => {
         banner.style.color = '#16a34a';
-        banner.innerText = '✅ 成績已成功登錄至試算表！本次測驗已結束。';
+        banner.innerText = '✅ 成績已成功登錄至試算表！全卷測驗已圓滿結束。';
       })
       .catch((err) => {
         banner.style.color = '#dc2626';
-        banner.innerText = '⚠️ 成績上傳失敗，請通知任課老師或檢查網路連線。';
+        banner.innerText = '⚠️ 成績上傳失敗，請檢查網路連線或聯絡老師。';
       });
     }
 
