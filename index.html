@@ -453,6 +453,7 @@
       statusMap[id] = isCorrect;
       detailRecords[`Q${id}`] = {
         userAnswers: userAnswers,
+        correctAnswers: correctAnswers, // 傳送正確答案以供比對著色
         isCorrect: isCorrect
       };
 
