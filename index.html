@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>高中化學：化學平衡 AI 自適應測驗</title>
+  <title>高中化學：化學平衡 AI 自適應測驗與學習診斷</title>
   <style>
     :root {
       --primary: #2563eb;
@@ -11,6 +11,7 @@
       --primary-light: #eff6ff;
       --secondary: #64748b;
       --success: #16a34a;
+      --warning: #d97706;
       --danger: #dc2626;
       --gray-bg: #f8fafc;
       --card-bg: #ffffff;
@@ -274,9 +275,6 @@
       box-shadow: 0 4px 10px rgba(37, 99, 235, 0.25);
       transition: all 0.2s;
     }
-    .btn-next-adaptive:hover {
-      background: #1d4ed8;
-    }
 
     .upload-banner {
       display: none;
@@ -286,10 +284,81 @@
       padding: 20px;
       text-align: center;
       margin-top: 30px;
-      margin-bottom: 50px;
       font-size: 1.1rem;
       font-weight: 600;
     }
+
+    /* 總評報告卡樣式 */
+    .report-card {
+      display: none;
+      background: #ffffff;
+      border: 2px solid #3b82f6;
+      border-radius: 16px;
+      padding: 26px;
+      margin: 30px 0 60px 0;
+      box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.15);
+      animation: fadeIn 0.4s ease-out;
+    }
+    .report-header {
+      border-bottom: 2px solid #eff6ff;
+      padding-bottom: 16px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    .report-title {
+      font-size: 1.4rem;
+      color: #1e3a8a;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+    .report-summary-text {
+      color: #475569;
+      font-size: 1rem;
+    }
+    .diag-section {
+      margin-bottom: 20px;
+      padding: 16px;
+      border-radius: 10px;
+    }
+    .diag-clear {
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+    }
+    .diag-reinforce {
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+    }
+    .diag-weak {
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+    }
+    .diag-title {
+      font-weight: bold;
+      font-size: 1.1rem;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .diag-list {
+      margin: 0;
+      padding-left: 22px;
+      font-size: 0.95rem;
+      color: #334155;
+    }
+    .diag-list li {
+      margin-bottom: 6px;
+    }
+    .study-advice-box {
+      background: #f8fafc;
+      border-left: 4px solid #3b82f6;
+      padding: 14px 18px;
+      border-radius: 6px;
+      margin-top: 18px;
+      font-size: 0.95rem;
+      color: #1e293b;
+    }
+
     sub, sup {
       font-size: 75%;
       line-height: 0;
@@ -305,7 +374,7 @@
   <div class="container">
     <header>
       <h1>🧪 高中化學：化學平衡 AI 自適應測驗</h1>
-      <p class="subtitle">全卷共 20 題 ｜ 支援 AI 答題自適應調控難度、即時詳解鎖定與試算表自動登記成績。</p>
+      <p class="subtitle">全卷共 20 題 ｜ 支援即時解析、難度自適應、試算表自動登分與全方位學習診斷總評。</p>
     </header>
 
     <div class="student-card">
@@ -325,10 +394,10 @@
 
     <!-- 模式選擇 -->
     <div id="modeCard" class="mode-card">
-      <div class="mode-title">🎯 請填寫學生資料後，選擇作答模式：</div>
+      <div class="mode-title">🎯 請選擇作答呈現模式（未填寫資料將以訪客作答）：</div>
       <div class="mode-btns">
         <button type="button" class="btn-mode" onclick="startQuiz('adaptive')">
-          🤖 AI 智慧自適應模式<br><small style="font-weight: normal;">(答對自動晉級難題，答錯維持基礎題強化)</small>
+          🤖 AI 智慧自適應模式<br><small style="font-weight: normal;">(答對自動晉級難題，答錯以基礎題鞏固)</small>
         </button>
         <button type="button" class="btn-mode" onclick="startQuiz('all')">
           📋 全卷標準模式<br><small style="font-weight: normal;">(一次展開全部 20 題)</small>
@@ -351,16 +420,36 @@
       </button>
     </div>
 
+    <!-- 上傳提示橫幅 -->
     <div id="uploadBanner" class="upload-banner"></div>
+
+    <!-- 學習概念診斷總評報告卡 -->
+    <div id="reportCard" class="report-card">
+      <div class="report-header">
+        <div class="report-title">📊 化學平衡單元：學習能力診斷總評</div>
+        <div id="reportStudentInfo" class="report-summary-text"></div>
+      </div>
+      <div id="reportSections"></div>
+      <div id="studyAdvice" class="study-advice-box"></div>
+    </div>
   </div>
 
   <script>
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxxL8aghmYIWUVNeQRD9-4bXDAIVTZjd-5afQLoe1irKaFBM6VjTPE6yHvi-7PVTL6q/exec";
 
-    // 20 題資料庫（包含難易度分級 level: 1基礎, 2中階, 3進階）
+    // 概念模組對應表
+    const CONCEPT_MAP = {
+      "definition": { name: "化學平衡基本定義與動態平衡", desc: "了解正逆反應速率相等、濃度維持定值與平衡條件。" },
+      "expression": { name: "平衡常數表示式與熱化學關係", desc: "掌握純固體/液體排除規則、方程式係數倍數與逆向時 K 與 ΔH 之換算。" },
+      "calculation": { name: "平衡常數數值與平衡濃度計算", desc: "熟悉 Kc、Kp 計算方法、氣體分壓計算及比色法計算。" },
+      "le_chatelier": { name: "勒沙特列原理與平衡移動判斷", desc: "溫度（吸/放熱）、壓力（體積壓縮）、加酸加鹼及同離子對平衡移動方向之影響。" },
+      "solubility": { name: "沉澱溶解平衡與溶度積 (Ksp)", desc: "掌握微溶性鹽類 Ksp 計算、同離子效應對溶解度之抑制以及沉澱競爭反應。" }
+    };
+
+    // 20 題題庫資料（標註所屬 concept 與難度 level）
     const rawQuizData = [
       {
-        id: 1, level: 1,
+        id: 1, level: 1, concept: "definition",
         title: "25 ℃ 時，2Cl(g) ⇌ Cl2(g) 之 Kc＝1 × 10^38，若原有 [Cl]＝1 M，則平衡時 Cl2 之濃度為多少 M？",
         type: "single",
         options: [
@@ -370,10 +459,10 @@
           { key: "D", text: "10^-38" }
         ],
         answer: ["B"],
-        explanation: "由 2Cl(g) ⇌ Cl2(g) 之 Kc 值極大，可知此反應趨向右方進行非常完全，故平衡時 [Cl2] ≈ 0.5 M。"
+        explanation: "由 2Cl(g) ⇌ Cl2(g) 之 Kc 極大可知反應幾乎完全向右，完全反應時 [Cl2] ≈ 0.5 M。"
       },
       {
-        id: 2, level: 3,
+        id: 2, level: 3, concept: "calculation",
         title: "氫和碘蒸氣各 1.6 mol 於 2.0 L 容器中反應生成碘化氫，若 350 ℃ 時的平衡常數為 36.0，則平衡時有關各反應物及產物的濃度，哪些是正確的？",
         type: "multiple",
         options: [
@@ -384,10 +473,10 @@
           { key: "E", text: "[HI]＝0.2 M" }
         ],
         answer: ["B", "C"],
-        explanation: "初濃度 [H2]=[I2]=1.6/2.0=0.8 M。反應式 H2 + I2 ⇌ 2HI，平衡時 [H2]=[I2]=0.8-x，[HI]=2x。(2x)^2 / (0.8-x)^2 = 36 ⇒ x = 0.6。故平衡時 [H2]=[I2]=0.2 M，[HI]=1.2 M。"
+        explanation: "初濃度 [H2]=[I2]=0.8 M。 (2x)^2 / (0.8-x)^2 = 36 ⇒ x = 0.6。平衡時 [H2]=[I2]=0.2 M，[HI]=1.2 M。"
       },
       {
-        id: 3, level: 2,
+        id: 3, level: 2, concept: "le_chatelier",
         title: "下列各平衡系中，何者的平衡常數會隨溫度升高而變大？",
         type: "multiple",
         options: [
@@ -398,10 +487,10 @@
           { key: "E", text: "NaNO3(s) ⇌ NaNO2(s) + 1/2 O2(g)" }
         ],
         answer: ["A", "B", "E"],
-        explanation: "對吸熱反應（ΔH > 0）而言，升高溫度平衡向吸熱方向移動，平衡常數增大。(A)(B)(E)均為吸熱分解反應；(C)哈柏法製氨為放熱；(D)酸鹼中和為放熱反應。"
+        explanation: "吸熱反應升溫使平衡常數變大。(A)(B)(E)均為吸熱分解；(C)合成氨放熱；(D)酸鹼中和放熱。"
       },
       {
-        id: 4, level: 2,
+        id: 4, level: 2, concept: "expression",
         title: "A2B4 ⇌ 2AB2 的反應熱為 ΔH，平衡常數為 K，在同溫時，反應 AB2 ⇌ 1/2 A2B4，反應熱（ΔH'）及平衡常數（K'）應各為何？",
         type: "multiple",
         options: [
@@ -412,10 +501,10 @@
           { key: "E", text: "(K')^2＝1 / K" }
         ],
         answer: ["C", "E"],
-        explanation: "目標反應為原反應逆向並乘以 1/2。因此 ΔH' = -1/2 ΔH，K' = (1/K)^(1/2)，即 (K')^2 = 1/K。"
+        explanation: "反應逆向並乘以 1/2，故 ΔH' = -1/2 ΔH，K' = (1/K)^(1/2)，即 (K')^2 = 1/K。"
       },
       {
-        id: 5, level: 2,
+        id: 5, level: 2, concept: "expression",
         title: "下列有關平衡常數表示式的敘述中，何者不正確？",
         type: "multiple",
         options: [
@@ -426,10 +515,10 @@
           { key: "E", text: "C2H5OH(l) ⇌ C2H5OH(g) 之 Kc＝1 / [C2H5OH(g)]" }
         ],
         answer: ["A", "B", "D", "E"],
-        explanation: "(A) Hg2Cl2(s) ⇌ Hg2^2+ + 2Cl-，Ksp = [Hg2^2+][Cl-]^2；(B) 水為溶劑不列入；(D) 應為 Kc = [CH4][H2O] / ([CO][H2]^3)；(E) 應為 Kc = [C2H5OH(g)]。"
+        explanation: "(A) Ksp=[Hg2^2+][Cl-]^2；(B) 水為溶劑不列入；(D) 應為[CO][H2]^3；(E) 應為 Kc=[C2H5OH(g)]。"
       },
       {
-        id: 6, level: 1,
+        id: 6, level: 1, concept: "calculation",
         title: "下列平衡系，何者 Kp 與 Kc 之數值與單位無關（即 Kp ＝ Kc）？",
         type: "multiple",
         options: [
@@ -440,10 +529,10 @@
           { key: "E", text: "H2O(g) + CO(g) ⇌ H2(g) + CO2(g)" }
         ],
         answer: ["C", "E"],
-        explanation: "Kp = Kc(RT)^Δn，當氣體前後係數差 Δn = 0 時，Kp = Kc 且與單位無關。(C) Δn = 2-(1+1)=0；(E) Δn = (1+1)-(1+1)=0。"
+        explanation: "Kp = Kc(RT)^Δn，當 Δn = 0 時，Kp = Kc。(C) Δn = 0；(E) Δn = 0。"
       },
       {
-        id: 7, level: 1,
+        id: 7, level: 1, concept: "definition",
         title: "定溫下，當 A(aq) + 3B(aq) ⇌ 2C(aq) 達平衡時，下列敘述何者正確？",
         type: "multiple",
         options: [
@@ -454,10 +543,10 @@
           { key: "E", text: "[C]^2 / ([A][B]^3) 為定值" }
         ],
         answer: ["A", "E"],
-        explanation: "平衡時動態平衡正逆反應速率相等且不為0；濃度維持定值；反應商等於平衡常數為定值。"
+        explanation: "平衡時為動態平衡，正逆反應速率相等且不為0；濃度維持定值；反應商等於平衡常數。"
       },
       {
-        id: 8, level: 3,
+        id: 8, level: 3, concept: "calculation",
         title: "在 1000 K 時，反應 CaCO3(s) ⇌ CaO(s) + CO2(g) 達平衡時 PCO2＝0.04 atm；同溫時，C(s) + CO2(g) ⇌ 2CO(g) 之 Kp＝1.96 atm。若將足量 C(s)、CaO(s) 和 CaCO3(s) 置於密閉容器，於 1000 K 達平衡時，下列何者正確？",
         type: "multiple",
         options: [
@@ -468,10 +557,10 @@
           { key: "E", text: "CaCO3(s) 的量較開始反應時少" }
         ],
         answer: ["B", "C", "E"],
-        explanation: "足量 CaCO3 與 CaO 存在時 PCO2 恆為 0.04 atm。(PCO)^2 / 0.04 = 1.96 ⇒ PCO = 0.28 atm。反應進行消耗 C 與 CaCO3 生成 CaO 與 CO。"
+        explanation: "PCO2 恆為 0.04 atm。(PCO)^2 / 0.04 = 1.96 ⇒ PCO = 0.28 atm。反應進行消耗 C 與 CaCO3 生成 CaO 與 CO。"
       },
       {
-        id: 9, level: 1,
+        id: 9, level: 1, concept: "expression",
         title: "下列平衡系中，各物質的濃度或壓力單位，不論以 mol L^-1 或 mmHg 表示，其平衡常數的數值均相同的為何？",
         type: "multiple",
         options: [
@@ -482,10 +571,10 @@
           { key: "E", text: "CH4(g) + 2O2(g) ⇌ CO2(g) + 2H2O(g)" }
         ],
         answer: ["C", "E"],
-        explanation: "氣體生成物係數和等於反應物係數和（Δn = 0）時，平衡常數為無因次量，數值不受單位換算影響。"
+        explanation: "當氣體生成物與反應物係數和相等（Δn = 0）時，平衡常數為無因次量，數值不受單位影響。"
       },
       {
-        id: 10, level: 2,
+        id: 10, level: 2, concept: "le_chatelier",
         title: "某反應：aA(s) + bB(g) ⇌ cC(g) 達到平衡時，溫度升高時 C 的體積百分率下降；在同溫下壓力 P1 ＞ P2 時，高壓 P1 的 C 體積百分率較大。由此可判斷何者正確？",
         type: "multiple",
         options: [
@@ -496,10 +585,10 @@
           { key: "E", text: "b ＞ c" }
         ],
         answer: ["A", "D", "E"],
-        explanation: "升溫使 C% 下降代表正反應放熱；加壓使平衡向氣體分子數較小方向移動，高壓 C% 大代表 b > c。因 a 為固體，故 a+b > c。"
+        explanation: "升溫使 C% 減少故正反應放熱；加壓有利氣體分子數較小的一方，高壓 C% 大代表 b > c。因 a 為固體，亦有 a+b > c。"
       },
       {
-        id: 11, level: 3,
+        id: 11, level: 3, concept: "solubility",
         title: "設 A(g) + B(g) ⇌ 3C(g) 於 25 ℃ 時 Kc＝2，則在該溫度下 5 L 之容器中各置入下列物質，何者會趨向正反應？",
         type: "multiple",
         options: [
@@ -510,10 +599,10 @@
           { key: "E", text: "A、B、C 分別為 2、1、3 mol" }
         ],
         answer: ["A", "C", "D"],
-        explanation: "Q = [C]^3 / ([A][B]) = (nC^3 / (nA*nB)) * (1/5)。(A) Q=0.4 < 2 向右；(B) Q=2.7 > 2 向左；(C) Q=1.35 < 2 向右；(D) Q=0.8 < 2 向右；(E) Q=2.7 > 2 向左。"
+        explanation: "Q = [C]^3 / ([A][B]) = (nC^3 / (nA*nB)) * (1/5)。Q < Kc = 2 者趨向正反應。(A) Q=0.4；(C) Q=1.35；(D) Q=0.8。"
       },
       {
-        id: 12, level: 1,
+        id: 12, level: 1, concept: "expression",
         title: "平衡常數的大小，會受下列何種因素的影響？",
         type: "multiple",
         options: [
@@ -524,10 +613,10 @@
           { key: "E", text: "溶劑" }
         ],
         answer: ["A", "E"],
-        explanation: "平衡常數僅與反應本性、溫度以及溶劑種類有關。濃度、容器大小形狀、觸媒均不影響平衡常數。"
+        explanation: "平衡常數只受反應本性、溫度與溶劑影響。濃度、容器形狀、觸媒皆不改變平衡常數。"
       },
       {
-        id: 13, level: 1,
+        id: 13, level: 1, concept: "definition",
         title: "若化學反應 aA(g) + bB(g) ⇌ cC(g) + dD(g)，正逆速率常數為 k正、k逆，速率為 r正、r逆，平衡常數為 K，則平衡時何者正確？",
         type: "multiple",
         options: [
@@ -538,10 +627,10 @@
           { key: "E", text: "K ＝ k正 / k逆" }
         ],
         answer: ["B", "E"],
-        explanation: "達平衡時正逆反應速率相等（r正 = r逆）；基元反應中平衡常數 K = k正 / k逆。"
+        explanation: "平衡時動態平衡 r正 = r逆；在基元反應中 K = k正 / k逆。"
       },
       {
-        id: 14, level: 2,
+        id: 14, level: 2, concept: "calculation",
         title: "25 ℃ 下，下列哪些反應的 Kp ＞ Kc？",
         type: "multiple",
         options: [
@@ -552,10 +641,10 @@
           { key: "E", text: "N2H4(g) + O2(g) ⇌ N2(g) + 2H2O(g)" }
         ],
         answer: ["B", "D", "E"],
-        explanation: "Kp = Kc(RT)^Δn。在 25 ℃ (298 K) 時 RT ≈ 24.5 > 1。當 Δn > 0 時，Kp > Kc。(B) Δn=1；(D) Δn=1；(E) Δn=1。"
+        explanation: "Kp = Kc(RT)^Δn。25 ℃ 時 RT ≈ 24.5 > 1。當氣體莫耳數差 Δn > 0 時，Kp > Kc。(B) Δn=1；(D) Δn=1；(E) Δn=1。"
       },
       {
-        id: 15, level: 3,
+        id: 15, level: 3, concept: "le_chatelier",
         title: "反應 A(g) + xB(g) ⇌ 2C(g) + 2D(g) 中，在不同溫度下 C 莫耳數與時間關係：T2 比 T1 先達平衡且 C 莫耳數較低；不同壓力下 C 莫耳數隨壓力增大而減少，且 T3 曲線在 T4 之上。下列敘述何者正確？",
         type: "multiple",
         options: [
@@ -566,10 +655,10 @@
           { key: "E", text: "x ＜ 3" }
         ],
         answer: ["A", "D", "E"],
-        explanation: "T2 先達平衡故 T2 > T1；高溫下 C 產量少故正反應放熱；加壓不利於 C 生成，表示向右氣體係數變大，即 1 + x < 4，故 x < 3。"
+        explanation: "T2 先達平衡故 T2 > T1；高溫下 C 產量少故放熱；加壓不利於 C 生成，故 1 + x < 4 ⇒ x < 3。"
       },
       {
-        id: 16, level: 3,
+        id: 16, level: 3, concept: "le_chatelier",
         title: "下列哪一平衡系，當壓縮使反應容器體積減半，並維持一半體積至新平衡，溫度不變，則指定物質新舊平衡濃度之關係何者為 1 ＜ C新 / C舊 ＜ 2？",
         type: "single",
         options: [
@@ -580,10 +669,10 @@
           { key: "E", text: "C2H4(g) + H2(g) ⇌ C2H6(g) (針對 C2H6)" }
         ],
         answer: ["A"],
-        explanation: "體積減半瞬間濃度加倍。(A) 加壓使平衡右移消耗 H2，故新平衡濃度介於 1～2 倍之間；(B) 恰為 2 倍；(C)(D) 蒸氣壓回復原值為 1 倍；(E) 大於 2 倍。"
+        explanation: "加壓使平衡向氣體係數小（向右）移動，消耗 H2，故新平衡濃度介於 1～2 倍之間。"
       },
       {
-        id: 17, level: 2,
+        id: 17, level: 2, concept: "le_chatelier",
         title: "若於下列各平衡系中施以括號內的措施，何者平衡系向右移動？",
         type: "multiple",
         options: [
@@ -594,10 +683,10 @@
           { key: "E", text: "Ag+(aq) + Cl-(aq) ⇌ AgCl(s)（通入氨氣）" }
         ],
         answer: ["A", "B", "C"],
-        explanation: "(A) 加酸使鉻酸根轉為二鉻酸根，濃度降低使平衡右移；(B) 吸熱反應升溫向右；(C) 弱酸加水稀釋解離度增大向右；(D) 純固體不影響平衡；(E) 氨與銀離子錯合向左。"
+        explanation: "(A) 加酸使鉻酸根轉化為二鉻酸根，促使平衡右移；(B) 吸熱反應升溫向右；(C) 加水稀釋解離度增大向右。"
       },
       {
-        id: 18, level: 2,
+        id: 18, level: 2, concept: "solubility",
         title: "將適量的 Ag2CrO4 溶入水中達飽和後，測得 [CrO4^2-]＝3.00 × 10^-4 M，求 Ag2CrO4 的 Ksp 為何？",
         type: "single",
         options: [
@@ -608,10 +697,10 @@
           { key: "E", text: "3.60 × 10^-7" }
         ],
         answer: ["A"],
-        explanation: "Ag2CrO4(s) ⇌ 2Ag+ + CrO4^2-。[Ag+] = 2 * [CrO4^2-] = 6.00 × 10^-4 M。Ksp = [Ag+]^2 [CrO4^2-] = 1.08 × 10^-10。"
+        explanation: "[Ag+] = 2 * [CrO4^2-] = 6.00 × 10^-4 M。Ksp = [Ag+]^2 [CrO4^2-] = 1.08 × 10^-10。"
       },
       {
-        id: 19, level: 3,
+        id: 19, level: 3, concept: "solubility",
         title: "PbCl2(s) 在 1 M Pb(NO3)2(aq)、1 M NaCl(aq)、1 M NaI(aq) 及純水中的溶解度依序為 s1、s2、s3 及 s4，則下列何者正確？",
         type: "single",
         options: [
@@ -622,10 +711,10 @@
           { key: "E", text: "s4 ＝ s3 ＞ s1 ＞ s2" }
         ],
         answer: ["B"],
-        explanation: "同離子效應使 s1、s2 小於純水 s4；Cl- 為平方項抑制更強故 s1 > s2。在 NaI 中生成溶度積更小的 PbI2 沉澱消耗 Pb2+，使得 PbCl2 溶解度大增，故 s3 > s4。順序：s3 > s4 > s1 > s2。"
+        explanation: "同離子效應使 s1、s2 小於純水 s4；且 Cl- 為平方項故 s1 > s2。在 NaI 中生成 PbI2 沉澱消耗 Pb2+，使得 PbCl2 溶解度大增，故 s3 > s4。順序：s3 > s4 > s1 > s2。"
       },
       {
-        id: 20, level: 3,
+        id: 20, level: 3, concept: "calculation",
         title: "3.2 × 10^-2 M Fe(NO3)3(aq) 與 2 × 10^-3 M KSCN(aq) 各 10 mL 相混合達成平衡後，與 1.0 × 10^-3 M FeSCN^2+(aq) 標準液比色，當顏色深淺一樣時得 h標準：h未加＝7：10，求 Fe3+ + SCN- ⇌ FeSCN^2+ 之 K 值約為：",
         type: "single",
         options: [
@@ -635,11 +724,11 @@
           { key: "D", text: "83" }
         ],
         answer: ["C"],
-        explanation: "比色法 c1*h1=c2*h2，平衡 [FeSCN^2+] = 7.0 × 10^-4 M。各取 10 mL 稀釋後初濃度：[Fe3+]初 = 1.6 × 10^-2 M，[SCN-]初 = 1.0 × 10^-3 M。平衡時 [Fe3+] = 1.53 × 10^-2 M，[SCN-] = 3.0 × 10^-4 M。K ≈ 153。"
+        explanation: "比色法平衡 [FeSCN^2+] = 7.0 × 10^-4 M。平衡時 [Fe3+] = 1.53 × 10^-2 M，[SCN-] = 3.0 × 10^-4 M。K ≈ 153。"
       }
     ];
 
-    // 化學上下標轉換器
+    // 化學上下標符號轉換器
     function formatChem(str) {
       if (!str) return '';
       return str
@@ -667,21 +756,30 @@
     }
 
     let selectedMode = '';
-    let currentDifficulty = 1; // 1: 基礎, 2: 中階, 3: 進階
+    let currentDifficulty = 1;
     const servedQuestionIds = [];
     const statusMap = {};
     const detailRecords = {};
     let isUploaded = false;
 
     function checkStudentInfo() {
-      const sClass = document.getElementById('studentClass').value.trim();
-      const sSeat = document.getElementById('studentSeat').value.trim();
-      const sName = document.getElementById('studentName').value.trim();
+      let sClass = document.getElementById('studentClass').value.trim();
+      let sSeat = document.getElementById('studentSeat').value.trim();
+      let sName = document.getElementById('studentName').value.trim();
 
       if (!sClass || !sSeat || !sName) {
-        alert('請先填寫「班級」、「座號」與「姓名」！');
-        return false;
+        const proceed = confirm(
+          "⚠️ 您尚未填寫完整的學生資料（班級、座號、姓名）。\n\n" +
+          "確定要以【匿名／訪客】身分直接開始作答嗎？\n" +
+          "（成績與作答紀錄仍會上傳試算表備查，並產生個人學習診斷總評）"
+        );
+        if (!proceed) return false;
+
+        if (!sClass) document.getElementById('studentClass').value = "訪客";
+        if (!sSeat) document.getElementById('studentSeat').value = "0";
+        if (!sName) document.getElementById('studentName').value = "匿名學生";
       }
+
       document.getElementById('studentClass').disabled = true;
       document.getElementById('studentSeat').disabled = true;
       document.getElementById('studentName').disabled = true;
@@ -696,43 +794,32 @@
       document.getElementById('statusBar').style.display = 'flex';
 
       if (mode === 'adaptive') {
-        currentDifficulty = 1; // 從簡單開始
+        currentDifficulty = 1;
         renderNextAdaptiveQuestion();
       } else {
-        // 全卷模式直接展開
         rawQuizData.forEach((q, idx) => {
           renderQuestionCard(q, idx + 1);
         });
       }
     }
 
-    // 自適應挑選下一題核心邏輯
     function pickNextAdaptiveQuestion() {
-      // 找出尚未出過題目的候選清單
       const unserved = rawQuizData.filter(q => !servedQuestionIds.includes(q.id));
       if (unserved.length === 0) return null;
 
-      // 優先挑選符合目前難度的題目
       let candidates = unserved.filter(q => q.level === currentDifficulty);
-
-      // 若當前難度已抽完，智慧平滑回退
       if (candidates.length === 0) {
-        if (currentDifficulty === 3) {
-          candidates = unserved.filter(q => q.level === 2) || unserved;
-        } else if (currentDifficulty === 1) {
-          candidates = unserved.filter(q => q.level === 2) || unserved;
-        }
+        if (currentDifficulty === 3) candidates = unserved.filter(q => q.level === 2);
+        else if (currentDifficulty === 1) candidates = unserved.filter(q => q.level === 2);
         if (!candidates || candidates.length === 0) candidates = unserved;
       }
 
-      // 隨機抽 1 題
       const randomIndex = Math.floor(Math.random() * candidates.length);
       return candidates[randomIndex];
     }
 
     function renderNextAdaptiveQuestion() {
       document.getElementById('adaptiveNextBox').style.display = 'none';
-
       const nextQ = pickNextAdaptiveQuestion();
       if (!nextQ) return;
 
@@ -740,7 +827,6 @@
       renderQuestionCard(nextQ, servedQuestionIds.length);
     }
 
-    // 渲染題目卡片
     function renderQuestionCard(q, displayNum) {
       const container = document.getElementById('questionsContainer');
       const isSingle = q.type === 'single';
@@ -784,7 +870,6 @@
       container.appendChild(card);
     }
 
-    // 作答並鎖定
     function submitAndLock(id) {
       if (statusMap[id] !== undefined) return;
 
@@ -802,7 +887,6 @@
         return;
       }
 
-      // 鎖定
       const allInputs = document.querySelectorAll(`input[name="q_${id}"]`);
       allInputs.forEach(input => input.disabled = true);
       q.options.forEach(opt => {
@@ -832,7 +916,6 @@
           <strong>✔ 答對了！</strong> 正確答案：(${correctAnswers.join(', ')})
           <div class="explanation"><strong>💡 解題步驟與觀念：</strong><br>${formatChem(q.explanation)}</div>
         `;
-        // 自適應調整：答對晉級更難題目
         if (currentDifficulty < 3) currentDifficulty++;
       } else {
         resultBox.className = 'result-box result-wrong';
@@ -841,7 +924,6 @@
           您的作答：(${userAnswers.join(', ')})
           <div class="explanation"><strong>💡 解題步驟與觀念：</strong><br>${formatChem(q.explanation)}</div>
         `;
-        // 自適應調整：答錯退回基礎題或維持
         if (currentDifficulty > 1) currentDifficulty--;
       }
 
@@ -854,7 +936,6 @@
 
       updateStatus();
 
-      // 自適應模式下顯示載入下一題按鈕
       if (selectedMode === 'adaptive' && servedQuestionIds.length < rawQuizData.length) {
         const nextBox = document.getElementById('adaptiveNextBox');
         const nextBtn = document.getElementById('btnNextAdaptive');
@@ -878,7 +959,102 @@
 
       if (answeredCount === rawQuizData.length && !isUploaded) {
         uploadResultsToSheet(score, correctCount, rawQuizData.length);
+        generateDiagnosticReport(score, correctCount);
       }
+    }
+
+    // 生成能力診斷總評報告
+    function generateDiagnosticReport(score, correctCount) {
+      const reportCard = document.getElementById('reportCard');
+      const studentInfo = document.getElementById('reportStudentInfo');
+      const sections = document.getElementById('reportSections');
+      const advice = document.getElementById('studyAdvice');
+
+      const sClass = document.getElementById('studentClass').value;
+      const sSeat = document.getElementById('studentSeat').value;
+      const sName = document.getElementById('studentName').value;
+
+      studentInfo.innerText = `考生：${sClass} ${sSeat}號 ${sName} ｜ 總成績：${score} 分（答對 ${correctCount} / 20 題）`;
+
+      // 統計各概念模組的答對率
+      const conceptStats = {};
+      Object.keys(CONCEPT_MAP).forEach(k => {
+        conceptStats[k] = { total: 0, correct: 0, title: CONCEPT_MAP[k].name, desc: CONCEPT_MAP[k].desc };
+      });
+
+      rawQuizData.forEach(q => {
+        const cKey = q.concept;
+        if (conceptStats[cKey]) {
+          conceptStats[cKey].total++;
+          if (statusMap[q.id]) {
+            conceptStats[cKey].correct++;
+          }
+        }
+      });
+
+      const clearList = [];      // >= 70%
+      const reinforceList = [];  // 30% ~ 69%
+      const weakList = [];       // < 30%
+
+      Object.keys(conceptStats).forEach(k => {
+        const stat = conceptStats[k];
+        const rate = stat.total > 0 ? (stat.correct / stat.total) : 0;
+        const ratePercent = Math.round(rate * 100);
+        const itemInfo = `<strong>${stat.title}</strong>（答對率 ${ratePercent}%，${stat.correct}/${stat.total}題）<br><span style="color:#64748b; font-size:0.9rem;">📌 重點內涵：${stat.desc}</span>`;
+
+        if (rate >= 0.7) {
+          clearList.push(itemInfo);
+        } else if (rate >= 0.3) {
+          reinforceList.push(itemInfo);
+        } else {
+          weakList.push(itemInfo);
+        }
+      });
+
+      let sectionsHtml = '';
+
+      if (clearList.length > 0) {
+        sectionsHtml += `
+          <div class="diag-section diag-clear">
+            <div class="diag-title" style="color: #166534;">🟢 【觀念清楚】已充分掌握之領域：</div>
+            <ul class="diag-list">${clearList.map(li => `<li>${li}</li>`).join('')}</ul>
+          </div>
+        `;
+      }
+
+      if (reinforceList.length > 0) {
+        sectionsHtml += `
+          <div class="diag-section diag-reinforce">
+            <div class="diag-title" style="color: #b45309;">🟡 【需要加強】觀念未臻完備，需多加練習：</div>
+            <ul class="diag-list">${reinforceList.map(li => `<li>${li}</li>`).join('')}</ul>
+          </div>
+        `;
+      }
+
+      if (weakList.length > 0) {
+        sectionsHtml += `
+          <div class="diag-section diag-weak">
+            <div class="diag-title" style="color: #991b1b;">🔴 【可能完全不會】基礎薄弱或尚未建立，需優先複習：</div>
+            <ul class="diag-list">${weakList.map(li => `<li>${li}</li>`).join('')}</ul>
+          </div>
+        `;
+      }
+
+      sections.innerHTML = sectionsHtml;
+
+      // 綜合診斷學習建議
+      let adviceText = '<strong>💡 AI 學習導航建議：</strong><br>';
+      if (score >= 85) {
+        adviceText += '您的化學平衡觀念非常扎實！對各類平衡移動與計算皆有相當高的敏銳度。建議可進一步挑戰高三選修化學之酸鹼鹽緩衝溶液或多重錯離子平衡深度題。';
+      } else if (score >= 60) {
+        adviceText += '整體基礎觀念尚屬良好，但遇到多重平衡聯立計算、或多選題中多條件綜合判斷時容易失分。請優先針對「需要加強」與「可能完全不會」的模組詳讀各題解析並重新演練。';
+      } else {
+        adviceText += '目前在化學平衡單元的掌握度較低，尤其是動態平衡的微觀定義與勒沙特列原理方向判斷容易混淆。建議先放下繁複計算題，回到課本將平衡常數 Kc/Kp 的物理意義與平衡移動的定性規律重新讀懂，再行作答演練。';
+      }
+      advice.innerHTML = adviceText;
+
+      reportCard.style.display = 'block';
+      reportCard.scrollIntoView({ behavior: 'smooth' });
     }
 
     function uploadResultsToSheet(score, correctCount, totalCount) {
@@ -886,7 +1062,7 @@
       const banner = document.getElementById('uploadBanner');
       banner.style.display = 'block';
       banner.style.color = '#2563eb';
-      banner.innerText = '⏳ 全卷 20 題已完成，正在上傳成績至教師端試算表...';
+      banner.innerText = '⏳ 全卷 20 題已作答完畢，正在上傳成績至教師端試算表...';
 
       const payload = {
         studentClass: document.getElementById('studentClass').value.trim(),
@@ -908,7 +1084,7 @@
       })
       .then(() => {
         banner.style.color = '#16a34a';
-        banner.innerText = '✅ 成績與作答紀錄已成功登錄至試算表！測驗圓滿完成。';
+        banner.innerText = '✅ 成績與詳細作答紀錄已成功登錄至試算表！下方為您的單元能力總評報告：';
       })
       .catch((err) => {
         banner.style.color = '#dc2626';
