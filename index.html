@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>高中化學：化學平衡正式全卷測驗</title>
+  <title>高中化學：化學平衡 AI 自適應測驗</title>
   <style>
     :root {
       --primary: #2563eb;
@@ -81,7 +81,6 @@
       cursor: not-allowed;
     }
 
-    /* 測驗模式選擇卡片 */
     .mode-card {
       background: #ffffff;
       border: 2px solid #93c5fd;
@@ -105,8 +104,8 @@
     }
     .btn-mode {
       flex: 1;
-      min-width: 240px;
-      max-width: 340px;
+      min-width: 250px;
+      max-width: 360px;
       padding: 14px 18px;
       background: #eff6ff;
       border: 2px solid var(--primary);
@@ -144,6 +143,7 @@
     .status-score {
       color: var(--primary);
     }
+
     .card {
       background: var(--card-bg);
       border-radius: 12px;
@@ -171,6 +171,18 @@
       border-radius: 4px;
       margin-right: 6px;
     }
+    .level-badge {
+      display: inline-block;
+      font-size: 0.8rem;
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin-right: 6px;
+      font-weight: 600;
+    }
+    .level-1 { background: #dcfce7; color: #166534; }
+    .level-2 { background: #fef3c7; color: #b45309; }
+    .level-3 { background: #fee2e2; color: #991b1b; }
+
     .locked-badge {
       display: inline-block;
       background: #fee2e2;
@@ -246,13 +258,12 @@
       border-left: 4px solid var(--primary);
     }
 
-    /* 漸進加載按鈕區塊 */
-    .load-more-box {
+    .adaptive-next-box {
       text-align: center;
-      margin: 28px 0;
+      margin: 24px 0;
     }
-    .btn-load-more {
-      background: #0284c7;
+    .btn-next-adaptive {
+      background: #2563eb;
       color: #ffffff;
       border: none;
       padding: 12px 28px;
@@ -260,13 +271,11 @@
       font-size: 1.05rem;
       font-weight: 600;
       cursor: pointer;
-      box-shadow: 0 4px 10px rgba(2, 132, 199, 0.25);
+      box-shadow: 0 4px 10px rgba(37, 99, 235, 0.25);
       transition: all 0.2s;
     }
-    .btn-load-more:disabled {
-      background: #94a3b8;
-      cursor: not-allowed;
-      box-shadow: none;
+    .btn-next-adaptive:hover {
+      background: #1d4ed8;
     }
 
     .upload-banner {
@@ -295,11 +304,10 @@
 
   <div class="container">
     <header>
-      <h1>🧪 高中化學：化學平衡正式全卷測驗</h1>
-      <p class="subtitle">全卷共 20 題 ｜ 每題作答後即鎖定並即時解析，作答完畢自動上傳試算表登記成績。</p>
+      <h1>🧪 高中化學：化學平衡 AI 自適應測驗</h1>
+      <p class="subtitle">全卷共 20 題 ｜ 支援 AI 答題自適應調控難度、即時詳解鎖定與試算表自動登記成績。</p>
     </header>
 
-    <!-- 考生基本資料欄 -->
     <div class="student-card">
       <div class="info-group">
         <label for="studentClass">班級：</label>
@@ -315,20 +323,19 @@
       </div>
     </div>
 
-    <!-- 模式選擇卡片 -->
+    <!-- 模式選擇 -->
     <div id="modeCard" class="mode-card">
-      <div class="mode-title">🎯 請先填妥上方學生資料，再選擇作答呈現模式：</div>
+      <div class="mode-title">🎯 請填寫學生資料後，選擇作答模式：</div>
       <div class="mode-btns">
-        <button type="button" class="btn-mode" onclick="startQuiz('stepwise')">
-          ⚡ 漸進模式<br><small style="font-weight: normal;">(隨機出題，每次顯示 2 題逐步作答)</small>
+        <button type="button" class="btn-mode" onclick="startQuiz('adaptive')">
+          🤖 AI 智慧自適應模式<br><small style="font-weight: normal;">(答對自動晉級難題，答錯維持基礎題強化)</small>
         </button>
         <button type="button" class="btn-mode" onclick="startQuiz('all')">
-          📋 全卷模式<br><small style="font-weight: normal;">(一次性展開完整 20 題)</small>
+          📋 全卷標準模式<br><small style="font-weight: normal;">(一次展開全部 20 題)</small>
         </button>
       </div>
     </div>
 
-    <!-- 頂部即時狀態統計 -->
     <div class="status-bar" id="statusBar">
       <div class="status-info">已作答：<span id="answeredCount">0</span> / <span id="totalCount">20</span> 題</div>
       <div class="status-info status-score">目前得分：<span id="scoreText">0</span> 分</div>
@@ -338,10 +345,9 @@
       <div id="questionsContainer"></div>
     </form>
 
-    <!-- 漸進模式專用按鈕容器 -->
-    <div id="loadMoreContainer" class="load-more-box" style="display: none;">
-      <button type="button" id="btnLoadMore" class="btn-load-more" onclick="loadNextBatch()" disabled>
-        🔒 請先作答完成目前題目再繼續
+    <div id="adaptiveNextBox" class="adaptive-next-box" style="display: none;">
+      <button type="button" id="btnNextAdaptive" class="btn-next-adaptive" onclick="renderNextAdaptiveQuestion()">
+        ✨ 載入下一題
       </button>
     </div>
 
@@ -351,10 +357,10 @@
   <script>
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxxL8aghmYIWUVNeQRD9-4bXDAIVTZjd-5afQLoe1irKaFBM6VjTPE6yHvi-7PVTL6q/exec";
 
-    // 20 題化學平衡題目資料庫
+    // 20 題資料庫（包含難易度分級 level: 1基礎, 2中階, 3進階）
     const rawQuizData = [
       {
-        id: 1,
+        id: 1, level: 1,
         title: "25 ℃ 時，2Cl(g) ⇌ Cl2(g) 之 Kc＝1 × 10^38，若原有 [Cl]＝1 M，則平衡時 Cl2 之濃度為多少 M？",
         type: "single",
         options: [
@@ -364,10 +370,10 @@
           { key: "D", text: "10^-38" }
         ],
         answer: ["B"],
-        explanation: "由 2Cl(g) ⇌ Cl2(g) 之 Kc 值極大，可知此反應向右進行非常完全，原有 [Cl]=1 M，完全反應時 [Cl2] ≈ 0.5 M。"
+        explanation: "由 2Cl(g) ⇌ Cl2(g) 之 Kc 值極大，可知此反應趨向右方進行非常完全，故平衡時 [Cl2] ≈ 0.5 M。"
       },
       {
-        id: 2,
+        id: 2, level: 3,
         title: "氫和碘蒸氣各 1.6 mol 於 2.0 L 容器中反應生成碘化氫，若 350 ℃ 時的平衡常數為 36.0，則平衡時有關各反應物及產物的濃度，哪些是正確的？",
         type: "multiple",
         options: [
@@ -378,10 +384,10 @@
           { key: "E", text: "[HI]＝0.2 M" }
         ],
         answer: ["B", "C"],
-        explanation: "初濃度 [H2]=[I2]=1.6/2.0=0.8 M。反應式 H2 + I2 ⇌ 2HI，平衡時 [H2]=[I2]=0.8-x，[HI]=2x。(2x)^2 / (0.8-x)^2 = 36 ⇒ x = 0.6。平衡時 [H2]=[I2]=0.2 M，[HI]=1.2 M。"
+        explanation: "初濃度 [H2]=[I2]=1.6/2.0=0.8 M。反應式 H2 + I2 ⇌ 2HI，平衡時 [H2]=[I2]=0.8-x，[HI]=2x。(2x)^2 / (0.8-x)^2 = 36 ⇒ x = 0.6。故平衡時 [H2]=[I2]=0.2 M，[HI]=1.2 M。"
       },
       {
-        id: 3,
+        id: 3, level: 2,
         title: "下列各平衡系中，何者的平衡常數會隨溫度升高而變大？",
         type: "multiple",
         options: [
@@ -392,10 +398,10 @@
           { key: "E", text: "NaNO3(s) ⇌ NaNO2(s) + 1/2 O2(g)" }
         ],
         answer: ["A", "B", "E"],
-        explanation: "吸熱反應（ΔH > 0）升溫時平衡向吸熱方向移動，平衡常數增大。(A)(B)(E)均為吸熱反應；(C)合成氨放熱；(D)酸鹼中和放熱。"
+        explanation: "對吸熱反應（ΔH > 0）而言，升高溫度平衡向吸熱方向移動，平衡常數增大。(A)(B)(E)均為吸熱分解反應；(C)哈柏法製氨為放熱；(D)酸鹼中和為放熱反應。"
       },
       {
-        id: 4,
+        id: 4, level: 2,
         title: "A2B4 ⇌ 2AB2 的反應熱為 ΔH，平衡常數為 K，在同溫時，反應 AB2 ⇌ 1/2 A2B4，反應熱（ΔH'）及平衡常數（K'）應各為何？",
         type: "multiple",
         options: [
@@ -406,10 +412,10 @@
           { key: "E", text: "(K')^2＝1 / K" }
         ],
         answer: ["C", "E"],
-        explanation: "原反應逆向並乘以 1/2。因此 ΔH' = -1/2 ΔH，K' = (1/K)^(1/2)，即 (K')^2 = 1/K。"
+        explanation: "目標反應為原反應逆向並乘以 1/2。因此 ΔH' = -1/2 ΔH，K' = (1/K)^(1/2)，即 (K')^2 = 1/K。"
       },
       {
-        id: 5,
+        id: 5, level: 2,
         title: "下列有關平衡常數表示式的敘述中，何者不正確？",
         type: "multiple",
         options: [
@@ -420,10 +426,10 @@
           { key: "E", text: "C2H5OH(l) ⇌ C2H5OH(g) 之 Kc＝1 / [C2H5OH(g)]" }
         ],
         answer: ["A", "B", "D", "E"],
-        explanation: "(A) Hg2Cl2(s) ⇌ Hg2^2+ + 2Cl-，Ksp = [Hg2^2+][Cl-]^2；(B) 水為溶劑不列入表示式；(D) 應為 Kc = [CH4][H2O] / ([CO][H2]^3)；(E) 應為 Kc = [C2H5OH(g)]。"
+        explanation: "(A) Hg2Cl2(s) ⇌ Hg2^2+ + 2Cl-，Ksp = [Hg2^2+][Cl-]^2；(B) 水為溶劑不列入；(D) 應為 Kc = [CH4][H2O] / ([CO][H2]^3)；(E) 應為 Kc = [C2H5OH(g)]。"
       },
       {
-        id: 6,
+        id: 6, level: 1,
         title: "下列平衡系，何者 Kp 與 Kc 之數值與單位無關（即 Kp ＝ Kc）？",
         type: "multiple",
         options: [
@@ -434,10 +440,10 @@
           { key: "E", text: "H2O(g) + CO(g) ⇌ H2(g) + CO2(g)" }
         ],
         answer: ["C", "E"],
-        explanation: "Kp = Kc(RT)^Δn，當氣體前後莫耳數差 Δn = 0 時，Kp = Kc。(C) Δn = 2-(1+1)=0；(E) Δn = (1+1)-(1+1)=0。"
+        explanation: "Kp = Kc(RT)^Δn，當氣體前後係數差 Δn = 0 時，Kp = Kc 且與單位無關。(C) Δn = 2-(1+1)=0；(E) Δn = (1+1)-(1+1)=0。"
       },
       {
-        id: 7,
+        id: 7, level: 1,
         title: "定溫下，當 A(aq) + 3B(aq) ⇌ 2C(aq) 達平衡時，下列敘述何者正確？",
         type: "multiple",
         options: [
@@ -451,7 +457,7 @@
         explanation: "平衡時動態平衡正逆反應速率相等且不為0；濃度維持定值；反應商等於平衡常數為定值。"
       },
       {
-        id: 8,
+        id: 8, level: 3,
         title: "在 1000 K 時，反應 CaCO3(s) ⇌ CaO(s) + CO2(g) 達平衡時 PCO2＝0.04 atm；同溫時，C(s) + CO2(g) ⇌ 2CO(g) 之 Kp＝1.96 atm。若將足量 C(s)、CaO(s) 和 CaCO3(s) 置於密閉容器，於 1000 K 達平衡時，下列何者正確？",
         type: "multiple",
         options: [
@@ -462,10 +468,10 @@
           { key: "E", text: "CaCO3(s) 的量較開始反應時少" }
         ],
         answer: ["B", "C", "E"],
-        explanation: "足量 CaCO3 與 CaO 存在時 PCO2 恆等於 0.04 atm。(PCO)^2 / 0.04 = 1.96 ⇒ PCO = 0.28 atm。反應進行消耗 C 與 CaCO3。"
+        explanation: "足量 CaCO3 與 CaO 存在時 PCO2 恆為 0.04 atm。(PCO)^2 / 0.04 = 1.96 ⇒ PCO = 0.28 atm。反應進行消耗 C 與 CaCO3 生成 CaO 與 CO。"
       },
       {
-        id: 9,
+        id: 9, level: 1,
         title: "下列平衡系中，各物質的濃度或壓力單位，不論以 mol L^-1 或 mmHg 表示，其平衡常數的數值均相同的為何？",
         type: "multiple",
         options: [
@@ -476,10 +482,10 @@
           { key: "E", text: "CH4(g) + 2O2(g) ⇌ CO2(g) + 2H2O(g)" }
         ],
         answer: ["C", "E"],
-        explanation: "氣體生成物與反應物係數和相同時（Δn = 0），平衡常數無因次，數值不受單位換算影響。"
+        explanation: "氣體生成物係數和等於反應物係數和（Δn = 0）時，平衡常數為無因次量，數值不受單位換算影響。"
       },
       {
-        id: 10,
+        id: 10, level: 2,
         title: "某反應：aA(s) + bB(g) ⇌ cC(g) 達到平衡時，溫度升高時 C 的體積百分率下降；在同溫下壓力 P1 ＞ P2 時，高壓 P1 的 C 體積百分率較大。由此可判斷何者正確？",
         type: "multiple",
         options: [
@@ -493,7 +499,7 @@
         explanation: "升溫使 C% 下降代表正反應放熱；加壓使平衡向氣體分子數較小方向移動，高壓 C% 大代表 b > c。因 a 為固體，故 a+b > c。"
       },
       {
-        id: 11,
+        id: 11, level: 3,
         title: "設 A(g) + B(g) ⇌ 3C(g) 於 25 ℃ 時 Kc＝2，則在該溫度下 5 L 之容器中各置入下列物質，何者會趨向正反應？",
         type: "multiple",
         options: [
@@ -507,7 +513,7 @@
         explanation: "Q = [C]^3 / ([A][B]) = (nC^3 / (nA*nB)) * (1/5)。(A) Q=0.4 < 2 向右；(B) Q=2.7 > 2 向左；(C) Q=1.35 < 2 向右；(D) Q=0.8 < 2 向右；(E) Q=2.7 > 2 向左。"
       },
       {
-        id: 12,
+        id: 12, level: 1,
         title: "平衡常數的大小，會受下列何種因素的影響？",
         type: "multiple",
         options: [
@@ -521,7 +527,7 @@
         explanation: "平衡常數僅與反應本性、溫度以及溶劑種類有關。濃度、容器大小形狀、觸媒均不影響平衡常數。"
       },
       {
-        id: 13,
+        id: 13, level: 1,
         title: "若化學反應 aA(g) + bB(g) ⇌ cC(g) + dD(g)，正逆速率常數為 k正、k逆，速率為 r正、r逆，平衡常數為 K，則平衡時何者正確？",
         type: "multiple",
         options: [
@@ -535,7 +541,7 @@
         explanation: "達平衡時正逆反應速率相等（r正 = r逆）；基元反應中平衡常數 K = k正 / k逆。"
       },
       {
-        id: 14,
+        id: 14, level: 2,
         title: "25 ℃ 下，下列哪些反應的 Kp ＞ Kc？",
         type: "multiple",
         options: [
@@ -549,7 +555,7 @@
         explanation: "Kp = Kc(RT)^Δn。在 25 ℃ (298 K) 時 RT ≈ 24.5 > 1。當 Δn > 0 時，Kp > Kc。(B) Δn=1；(D) Δn=1；(E) Δn=1。"
       },
       {
-        id: 15,
+        id: 15, level: 3,
         title: "反應 A(g) + xB(g) ⇌ 2C(g) + 2D(g) 中，在不同溫度下 C 莫耳數與時間關係：T2 比 T1 先達平衡且 C 莫耳數較低；不同壓力下 C 莫耳數隨壓力增大而減少，且 T3 曲線在 T4 之上。下列敘述何者正確？",
         type: "multiple",
         options: [
@@ -563,7 +569,7 @@
         explanation: "T2 先達平衡故 T2 > T1；高溫下 C 產量少故正反應放熱；加壓不利於 C 生成，表示向右氣體係數變大，即 1 + x < 4，故 x < 3。"
       },
       {
-        id: 16,
+        id: 16, level: 3,
         title: "下列哪一平衡系，當壓縮使反應容器體積減半，並維持一半體積至新平衡，溫度不變，則指定物質新舊平衡濃度之關係何者為 1 ＜ C新 / C舊 ＜ 2？",
         type: "single",
         options: [
@@ -577,7 +583,7 @@
         explanation: "體積減半瞬間濃度加倍。(A) 加壓使平衡右移消耗 H2，故新平衡濃度介於 1～2 倍之間；(B) 恰為 2 倍；(C)(D) 蒸氣壓回復原值為 1 倍；(E) 大於 2 倍。"
       },
       {
-        id: 17,
+        id: 17, level: 2,
         title: "若於下列各平衡系中施以括號內的措施，何者平衡系向右移動？",
         type: "multiple",
         options: [
@@ -591,7 +597,7 @@
         explanation: "(A) 加酸使鉻酸根轉為二鉻酸根，濃度降低使平衡右移；(B) 吸熱反應升溫向右；(C) 弱酸加水稀釋解離度增大向右；(D) 純固體不影響平衡；(E) 氨與銀離子錯合向左。"
       },
       {
-        id: 18,
+        id: 18, level: 2,
         title: "將適量的 Ag2CrO4 溶入水中達飽和後，測得 [CrO4^2-]＝3.00 × 10^-4 M，求 Ag2CrO4 的 Ksp 為何？",
         type: "single",
         options: [
@@ -605,7 +611,7 @@
         explanation: "Ag2CrO4(s) ⇌ 2Ag+ + CrO4^2-。[Ag+] = 2 * [CrO4^2-] = 6.00 × 10^-4 M。Ksp = [Ag+]^2 [CrO4^2-] = 1.08 × 10^-10。"
       },
       {
-        id: 19,
+        id: 19, level: 3,
         title: "PbCl2(s) 在 1 M Pb(NO3)2(aq)、1 M NaCl(aq)、1 M NaI(aq) 及純水中的溶解度依序為 s1、s2、s3 及 s4，則下列何者正確？",
         type: "single",
         options: [
@@ -619,7 +625,7 @@
         explanation: "同離子效應使 s1、s2 小於純水 s4；Cl- 為平方項抑制更強故 s1 > s2。在 NaI 中生成溶度積更小的 PbI2 沉澱消耗 Pb2+，使得 PbCl2 溶解度大增，故 s3 > s4。順序：s3 > s4 > s1 > s2。"
       },
       {
-        id: 20,
+        id: 20, level: 3,
         title: "3.2 × 10^-2 M Fe(NO3)3(aq) 與 2 × 10^-3 M KSCN(aq) 各 10 mL 相混合達成平衡後，與 1.0 × 10^-3 M FeSCN^2+(aq) 標準液比色，當顏色深淺一樣時得 h標準：h未加＝7：10，求 Fe3+ + SCN- ⇌ FeSCN^2+ 之 K 值約為：",
         type: "single",
         options: [
@@ -633,7 +639,7 @@
       }
     ];
 
-    // 化學符號上下標自動美化器
+    // 化學上下標轉換器
     function formatChem(str) {
       if (!str) return '';
       return str
@@ -660,24 +666,13 @@
         });
     }
 
-    let activeQuizList = [];
-    let currentRenderIndex = 0;
     let selectedMode = '';
+    let currentDifficulty = 1; // 1: 基礎, 2: 中階, 3: 進階
+    const servedQuestionIds = [];
     const statusMap = {};
     const detailRecords = {};
     let isUploaded = false;
 
-    // 洗牌演算法 (Fisher-Yates)
-    function shuffle(arr) {
-      const copy = [...arr];
-      for (let i = copy.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [copy[i], copy[j]] = [copy[j], copy[i]];
-      }
-      return copy;
-    }
-
-    // 檢查基本資料
     function checkStudentInfo() {
       const sClass = document.getElementById('studentClass').value.trim();
       const sSeat = document.getElementById('studentSeat').value.trim();
@@ -693,7 +688,6 @@
       return true;
     }
 
-    // 開始測驗
     function startQuiz(mode) {
       if (!checkStudentInfo()) return;
 
@@ -701,103 +695,96 @@
       document.getElementById('modeCard').style.display = 'none';
       document.getElementById('statusBar').style.display = 'flex';
 
-      if (mode === 'stepwise') {
-        // 隨機抽題打散順序
-        activeQuizList = shuffle(rawQuizData);
-        currentRenderIndex = 0;
-        document.getElementById('loadMoreContainer').style.display = 'block';
-        loadNextBatch(); // 載入前 2 題
+      if (mode === 'adaptive') {
+        currentDifficulty = 1; // 從簡單開始
+        renderNextAdaptiveQuestion();
       } else {
-        // 直接展開全部 20 題
-        activeQuizList = [...rawQuizData];
-        renderBatch(activeQuizList, 0);
-        currentRenderIndex = activeQuizList.length;
+        // 全卷模式直接展開
+        rawQuizData.forEach((q, idx) => {
+          renderQuestionCard(q, idx + 1);
+        });
       }
     }
 
-    // 渲染特定題目陣列至畫面上
-    function renderBatch(items, startIndex) {
+    // 自適應挑選下一題核心邏輯
+    function pickNextAdaptiveQuestion() {
+      // 找出尚未出過題目的候選清單
+      const unserved = rawQuizData.filter(q => !servedQuestionIds.includes(q.id));
+      if (unserved.length === 0) return null;
+
+      // 優先挑選符合目前難度的題目
+      let candidates = unserved.filter(q => q.level === currentDifficulty);
+
+      // 若當前難度已抽完，智慧平滑回退
+      if (candidates.length === 0) {
+        if (currentDifficulty === 3) {
+          candidates = unserved.filter(q => q.level === 2) || unserved;
+        } else if (currentDifficulty === 1) {
+          candidates = unserved.filter(q => q.level === 2) || unserved;
+        }
+        if (!candidates || candidates.length === 0) candidates = unserved;
+      }
+
+      // 隨機抽 1 題
+      const randomIndex = Math.floor(Math.random() * candidates.length);
+      return candidates[randomIndex];
+    }
+
+    function renderNextAdaptiveQuestion() {
+      document.getElementById('adaptiveNextBox').style.display = 'none';
+
+      const nextQ = pickNextAdaptiveQuestion();
+      if (!nextQ) return;
+
+      servedQuestionIds.push(nextQ.id);
+      renderQuestionCard(nextQ, servedQuestionIds.length);
+    }
+
+    // 渲染題目卡片
+    function renderQuestionCard(q, displayNum) {
       const container = document.getElementById('questionsContainer');
+      const isSingle = q.type === 'single';
+      const inputType = isSingle ? 'radio' : 'checkbox';
+      const typeBadge = isSingle ? '單選題' : '多選題';
 
-      items.forEach((q, offset) => {
-        const displayIndex = startIndex + offset + 1;
-        const isSingle = q.type === 'single';
-        const inputType = isSingle ? 'radio' : 'checkbox';
-        const typeBadge = isSingle ? '單選題' : '多選題';
+      let levelText = '⭐ 基礎題';
+      let levelClass = 'level-1';
+      if (q.level === 2) { levelText = '⭐⭐ 中階題'; levelClass = 'level-2'; }
+      if (q.level === 3) { levelText = '⭐⭐⭐ 挑戰題'; levelClass = 'level-3'; }
 
-        let optionsHtml = '';
-        q.options.forEach(opt => {
-          const changeHandler = isSingle ? `onchange="submitAndLock(${q.id})"` : '';
-          optionsHtml += `
-            <label class="option-label" id="label_${q.id}_${opt.key}">
-              <input type="${inputType}" name="q_${q.id}" value="${opt.key}" ${changeHandler}>
-              <span><strong>(${opt.key})</strong> ${formatChem(opt.text)}</span>
-            </label>
-          `;
-        });
-
-        const actionButton = !isSingle
-          ? `<button type="button" id="btn_${q.id}" class="btn-submit-q" onclick="submitAndLock(${q.id})">確定送出本題（鎖定）</button>`
-          : '';
-
-        const card = document.createElement('div');
-        card.className = 'card';
-        card.id = `card_${q.id}`;
-        card.innerHTML = `
-          <div class="q-title">
-            <span class="q-type">${typeBadge}</span>
-            <span id="locked_badge_${q.id}"></span>
-            第 ${displayIndex} 題：${formatChem(q.title)}
-          </div>
-          <div class="options">${optionsHtml}</div>
-          ${actionButton}
-          <div class="result-box" id="result_${q.id}"></div>
+      let optionsHtml = '';
+      q.options.forEach(opt => {
+        const changeHandler = isSingle ? `onchange="submitAndLock(${q.id})"` : '';
+        optionsHtml += `
+          <label class="option-label" id="label_${q.id}_${opt.key}">
+            <input type="${inputType}" name="q_${q.id}" value="${opt.key}" ${changeHandler}>
+            <span><strong>(${opt.key})</strong> ${formatChem(opt.text)}</span>
+          </label>
         `;
-        container.appendChild(card);
       });
 
-      checkLoadMoreAvailability();
+      const actionButton = !isSingle
+        ? `<button type="button" id="btn_${q.id}" class="btn-submit-q" onclick="submitAndLock(${q.id})">確定送出本題（鎖定）</button>`
+        : '';
+
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.id = `card_${q.id}`;
+      card.innerHTML = `
+        <div class="q-title">
+          <span class="q-type">${typeBadge}</span>
+          <span class="level-badge ${levelClass}">${levelText}</span>
+          <span id="locked_badge_${q.id}"></span>
+          第 ${displayNum} 題：${formatChem(q.title)}
+        </div>
+        <div class="options">${optionsHtml}</div>
+        ${actionButton}
+        <div class="result-box" id="result_${q.id}"></div>
+      `;
+      container.appendChild(card);
     }
 
-    // 漸進模式：繼續顯示下 2 題
-    function loadNextBatch() {
-      const batchSize = 2;
-      const nextBatch = activeQuizList.slice(currentRenderIndex, currentRenderIndex + batchSize);
-      if (nextBatch.length > 0) {
-        renderBatch(nextBatch, currentRenderIndex);
-        currentRenderIndex += nextBatch.length;
-      }
-      checkLoadMoreAvailability();
-    }
-
-    // 檢查「繼續加載」按鈕是否解鎖
-    function checkLoadMoreAvailability() {
-      if (selectedMode !== 'stepwise') return;
-
-      const btn = document.getElementById('btnLoadMore');
-      if (currentRenderIndex >= activeQuizList.length) {
-        // 題目已全部出完
-        btn.disabled = true;
-        btn.innerText = '🎉 全部 20 題已出完，請確認全卷完成';
-        return;
-      }
-
-      // 檢查目前已渲染出來的題目是否全部都作答鎖定了
-      const renderedQuestions = activeQuizList.slice(0, currentRenderIndex);
-      const allRenderedAnswered = renderedQuestions.every(q => statusMap[q.id] !== undefined);
-
-      if (allRenderedAnswered) {
-        btn.disabled = false;
-        btn.innerText = `➕ 繼續挑戰下 2 題 (目前 ${currentRenderIndex} / 20)`;
-        btn.style.background = '#2563eb';
-      } else {
-        btn.disabled = true;
-        btn.innerText = '🔒 請先作答完成目前題目再繼續';
-        btn.style.background = '#94a3b8';
-      }
-    }
-
-    // 作答並鎖定題目
+    // 作答並鎖定
     function submitAndLock(id) {
       if (statusMap[id] !== undefined) return;
 
@@ -815,7 +802,7 @@
         return;
       }
 
-      // 鎖定選項
+      // 鎖定
       const allInputs = document.querySelectorAll(`input[name="q_${id}"]`);
       allInputs.forEach(input => input.disabled = true);
       q.options.forEach(opt => {
@@ -835,7 +822,6 @@
         lockBadge.innerText = '已鎖定';
       }
 
-      // 判斷對錯
       const isCorrect = userAnswers.length === correctAnswers.length &&
                         userAnswers.every((val, index) => val === correctAnswers[index]);
 
@@ -846,6 +832,8 @@
           <strong>✔ 答對了！</strong> 正確答案：(${correctAnswers.join(', ')})
           <div class="explanation"><strong>💡 解題步驟與觀念：</strong><br>${formatChem(q.explanation)}</div>
         `;
+        // 自適應調整：答對晉級更難題目
+        if (currentDifficulty < 3) currentDifficulty++;
       } else {
         resultBox.className = 'result-box result-wrong';
         resultBox.innerHTML = `
@@ -853,6 +841,8 @@
           您的作答：(${userAnswers.join(', ')})
           <div class="explanation"><strong>💡 解題步驟與觀念：</strong><br>${formatChem(q.explanation)}</div>
         `;
+        // 自適應調整：答錯退回基礎題或維持
+        if (currentDifficulty > 1) currentDifficulty--;
       }
 
       statusMap[id] = isCorrect;
@@ -863,10 +853,16 @@
       };
 
       updateStatus();
-      checkLoadMoreAvailability();
+
+      // 自適應模式下顯示載入下一題按鈕
+      if (selectedMode === 'adaptive' && servedQuestionIds.length < rawQuizData.length) {
+        const nextBox = document.getElementById('adaptiveNextBox');
+        const nextBtn = document.getElementById('btnNextAdaptive');
+        nextBox.style.display = 'block';
+        nextBtn.innerText = `✨ 進入第 ${servedQuestionIds.length + 1} 題（AI 智慧動態難度）`;
+      }
     }
 
-    // 更新狀態與計分
     function updateStatus() {
       const answeredKeys = Object.keys(statusMap);
       const answeredCount = answeredKeys.length;
@@ -880,19 +876,17 @@
       const score = Math.round((correctCount / rawQuizData.length) * 100);
       document.getElementById('scoreText').innerText = score;
 
-      // 20 題全部作答完畢時自動上傳
       if (answeredCount === rawQuizData.length && !isUploaded) {
         uploadResultsToSheet(score, correctCount, rawQuizData.length);
       }
     }
 
-    // 上傳成績至 Google 試算表
     function uploadResultsToSheet(score, correctCount, totalCount) {
       isUploaded = true;
       const banner = document.getElementById('uploadBanner');
       banner.style.display = 'block';
       banner.style.color = '#2563eb';
-      banner.innerText = '⏳ 全卷 20 題作答完畢，正在上傳成績至教師端試算表...';
+      banner.innerText = '⏳ 全卷 20 題已完成，正在上傳成績至教師端試算表...';
 
       const payload = {
         studentClass: document.getElementById('studentClass').value.trim(),
